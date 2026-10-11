@@ -14,6 +14,7 @@ Serve `app/` with any static web server. No build or dependency installation is 
 - Browser speech recognition when supported and permitted; transcribes into composer for review before sending.
 - Local conversation history, session selection, manually editable story drafts and text export.
 - On-device voice cloning: record or upload 5–10 seconds, then hear any line in that voice and save it as WAV. Runs in the browser with Pocket TTS (Kyutai, CC BY 4.0) through the MIT-licensed pocket-voice worker in `app/vendor/pocket-voice/` (see its NOTICE.md). The model and runtime are served from this repo (`app/models/`, `app/vendor/ort/`, refreshed by `tools/fetch-voice-model.sh`), with the public copies as fallback; samples and text are not uploaded. `docs/voice-pipeline.md` covers turning a generated video clip into a character voice with `tools/clip-to-voice.sh`. A consent checkbox is required before a sample is saved.
+- On-device AI brain (test): the "AI brain" switch in chat runs a small open model (Llama 3.2, 1B or 3B) in the browser with WebLLM (`app/vendor/web-llm/`, Apache-2.0). It uses the character's persona, the scene and recent messages, and tags each reply with one of five emotions. Needs WebGPU; the model downloads from Hugging Face on first use. No long-term memory yet.
 - Clearly labeled scripted dialogue mode for interface testing. Turn it off to write manual dialogue through the storybook.
 
 ## Not connected
