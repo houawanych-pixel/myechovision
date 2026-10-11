@@ -13,7 +13,7 @@ Serve `app/` with any static web server. No build or dependency installation is 
 - Browser speech synthesis voice enumeration, preview and selection; per-session voice retained.
 - Browser speech recognition when supported and permitted; transcribes into composer for review before sending.
 - Local conversation history, session selection, manually editable story drafts and text export.
-- On-device voice cloning: record or upload 5–10 seconds, then hear any line in that voice and save it as WAV. Runs in the browser with Pocket TTS (Kyutai, CC BY 4.0) through the MIT-licensed pocket-voice worker in `app/vendor/pocket-voice/` (see its NOTICE.md). The first use downloads the model from Hugging Face and ONNX Runtime from jsDelivr; samples and text are not uploaded. A consent checkbox is required before a sample is saved.
+- On-device voice cloning: record or upload 5–10 seconds, then hear any line in that voice and save it as WAV. Runs in the browser with Pocket TTS (Kyutai, CC BY 4.0) through the MIT-licensed pocket-voice worker in `app/vendor/pocket-voice/` (see its NOTICE.md). The model and runtime are served from this repo (`app/models/`, `app/vendor/ort/`, refreshed by `tools/fetch-voice-model.sh`), with the public copies as fallback; samples and text are not uploaded. `docs/voice-pipeline.md` covers turning a generated video clip into a character voice with `tools/clip-to-voice.sh`. A consent checkbox is required before a sample is saved.
 - Clearly labeled scripted dialogue mode for interface testing. Turn it off to write manual dialogue through the storybook.
 
 ## Not connected

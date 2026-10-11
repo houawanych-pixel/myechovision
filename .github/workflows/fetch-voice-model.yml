@@ -1,0 +1,26 @@
+name: Fetch voice model
+# Copies the voice-cloning model and runtime into the repo (see tools/fetch-voice-model.sh).
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/fetch-voice-model.yml
+      - tools/fetch-voice-model.sh
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash tools/fetch-voice-model.sh
+      - name: Commit the files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/models app/vendor/ort
+          git diff --cached --quiet && { echo "No changes"; exit 0; }
+          git commit -m "Add our own copy of the voice model and runtime"
+          git pull --rebase origin main
+          git push origin HEAD:main

@@ -2,7 +2,9 @@
 console.log("Pocket TTS Worker Starting...");
 
 const ORT_VERSION = "1.18.0";
-const ORT_CDN_BASE = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VERSION}/dist/`;
+// Echo Vision change: the page may pass its own copies of the runtime and model (?ort=…&models=…).
+const EV_PARAMS = new URLSearchParams(self.location.search);
+const ORT_CDN_BASE = EV_PARAMS.get("ort") || `https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VERSION}/dist/`;
 
 // sentencepiece.js is loaded lazily via ensureSentencepieceLoaded() to reduce
 // peak memory during ORT WASM compilation (critical for iOS memory limits).
@@ -71,7 +73,7 @@ let stTensors = [];
 let isGenerating = false;
 let isReady = false;
 
-const HF_CDN_BASE = "https://huggingface.co/spaces/KevinAHM/pocket-tts-web/resolve/main";
+const HF_CDN_BASE = EV_PARAMS.get("models") || "https://huggingface.co/spaces/KevinAHM/pocket-tts-web/resolve/main";
 
 function bundleDir(language) {
     return `${HF_CDN_BASE}/onnx/${language}`;
@@ -765,6 +767,8 @@ async function loadBundle(language, { initialLoad = false } = {}) {
     if (!defaultVoice) {
         defaultVoice = Object.keys(predefinedVoiceRecords)[0] || null;
     }
+    // Echo Vision change: our own model copy ships without the bundled sample voices.
+    if (defaultVoice && !predefinedVoiceRecords[defaultVoice]) defaultVoice = null;
     currentVoiceName = defaultVoice;
 
     if (defaultVoice) {

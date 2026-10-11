@@ -1,6 +1,8 @@
 // On-device voice cloning for Echo Vision. Wraps the vendored Pocket TTS worker
 // (see vendor/pocket-voice/NOTICE.md). No audio or text leaves the device.
-const RATE=24000,WORKER=new URL('./vendor/pocket-voice/inference-worker.js?v=1',import.meta.url);
+const RATE=24000,HERE=import.meta.url;
+// Prefer our own copies of the model and runtime; fall back to the public ones if they are not there.
+async function workerURL(){const u=new URL('./vendor/pocket-voice/inference-worker.js',HERE);u.searchParams.set('v','2');const has=p=>fetch(new URL(p,HERE),{method:'HEAD'}).then(r=>r.ok).catch(()=>false);const [m,o]=await Promise.all([has('./models/onnx/english_2026-04/bundle.json'),has('./vendor/ort/ort.all.min.js')]);if(m)u.searchParams.set('models',new URL('./models',HERE).href);if(o)u.searchParams.set('ort',new URL('./vendor/ort/',HERE).href);return u}
 let worker,loading,op=null,job=null,ctx,nextT=0,sources=[],encoded=null,token=0,statusFn=()=>{};
 const cache=new Map();
 export const sampleRate=RATE;
@@ -17,7 +19,7 @@ function handle(m){if(m.type==='status'&&m.state==='loading')tell(m.status);cons
   if(o.kind==='load'&&m.type==='loaded'){op=null;o.resolve()}
   else if(o.kind==='encode'&&m.type==='voice_encoded'){op=null;o.resolve()}
   else if(o.kind==='gen'){const flush=()=>{if(o.part?.length&&!o.stopped&&!o.job.quiet)play(join(o.part));o.part=[]};if(m.type==='audio_chunk'){if(m.metrics?.chunkStart)flush();o.chunks.push(m.data);(o.part??=[]).push(m.data)}else if(m.type==='stream_ended'||(m.type==='status'&&/^Finished \(RTFx/.test(m.status))){flush();op=null;o.resolve(join(o.chunks))}}}
-function load(){return loading??=(async()=>{tell('Downloading the voice model. This happens once and can take a minute.');worker=new Worker(WORKER);worker.onmessage=e=>handle(e.data);worker.onerror=()=>{const o=op;op=null;o?.reject(Error('The voice model could not start in this browser.'))};const o=begin('load');worker.postMessage({type:'load'});await o.done})().catch(e=>{loading=null;worker?.terminate();worker=null;encoded=null;throw /fetch|load|network/i.test(e.message)?Error('The voice model could not be downloaded. Check your connection and try again.'):e})}
+function load(){return loading??=(async()=>{tell('Downloading the voice model. This happens once and can take a minute.');worker=new Worker(await workerURL());worker.onmessage=e=>handle(e.data);worker.onerror=()=>{const o=op;op=null;o?.reject(Error('The voice model could not start in this browser.'))};const o=begin('load');worker.postMessage({type:'load'});await o.done})().catch(e=>{loading=null;worker?.terminate();worker=null;encoded=null;throw /fetch|load|network/i.test(e.message)?Error('The voice model could not be downloaded. Check your connection and try again.'):e})}
 async function prep(blob){const c=audio(),decoded=await c.decodeAudioData(await blob.arrayBuffer()).catch(()=>{throw Error('This audio file could not be read. Try a WAV or MP3.')});if(decoded.duration<2)throw Error('The sample is too short. Use 5 to 10 seconds of clear speech.');const off=new OfflineAudioContext(1,Math.ceil(decoded.duration*RATE),RATE),src=off.createBufferSource();src.buffer=decoded;src.connect(off.destination);src.start();const pcm=(await off.startRendering()).getChannelData(0);return pcm.length>RATE*10?pcm.slice(0,RATE*10):new Float32Array(pcm)}
 export function silence(){sources.forEach(s=>{try{s.stop()}catch{}});sources=[];nextT=0}
 export function stop(){job=null;return halt()}
