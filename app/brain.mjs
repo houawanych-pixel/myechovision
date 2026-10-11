@@ -1,6 +1,6 @@
 // On-device character "brain" (test). Runs a small open language model in the browser with WebLLM
 // (see vendor/web-llm/NOTICE.md). Needs WebGPU. Nothing typed is sent to a server.
-import {brainPrompt,parseReply} from './core.mjs?v=2';
+import {brainPrompt,parseReply} from './core.mjs?v=3';
 export const MODELS={small:{label:'Small',size:'about 0.7 GB',base:'Llama-3.2-1B-Instruct'},large:{label:'Larger',size:'about 1.8 GB',base:'Llama-3.2-3B-Instruct'}};
 let engine=null,loadedId=null,loading=null,busy=false,statusFn=()=>{};
 export function onStatus(fn){statusFn=fn}
@@ -9,3 +9,15 @@ export async function support(){if(!navigator.gpu)return {ok:false,why:'This bro
 export function load(size='small'){return loading??=(async()=>{const s=await support();if(!s.ok)throw Error(s.why);const id=(MODELS[size]||MODELS.small).base+(s.f16?'-q4f16_1-MLC':'-q4f32_1-MLC');if(engine&&loadedId===id)return engine;statusFn('Loading the brain…');const {CreateMLCEngine}=await import('./vendor/web-llm/index.js');if(engine){await engine.unload().catch(()=>{});engine=null}engine=await CreateMLCEngine(id,{initProgressCallback:p=>statusFn(`Loading the brain… ${Math.round((p.progress||0)*100)}%`)});loadedId=id;return engine})().finally(()=>{loading=null})}
 // ctx: see brainPrompt in core.mjs. onText gets the reply so far as it is written.
 export async function reply(ctx,size,onText=()=>{}){if(busy)throw Error('Still thinking about the last message.');busy=true;try{const e=await load(size);statusFn('Thinking…');const stream=await e.chat.completions.create({messages:brainPrompt(ctx),stream:true,temperature:0.8,top_p:0.9,max_tokens:140});let raw='';for await(const part of stream){raw+=part.choices[0]?.delta?.content||'';const t=parseReply(raw,ctx.name).text;if(t)onText(t)}return parseReply(raw,ctx.name)}finally{busy=false}}
+
+// ---- Fast brain: any OpenAI-compatible chat service (a hosted model, a small proxy, or your own computer).
+// The key lives only in this browser's storage. It is never part of the app's code or its saved studio data.
+const KEY='echo-vision-brain-key';
+export const PRESETS=[{name:'Groq',url:'https://api.groq.com/openai/v1'},{name:'OpenRouter',url:'https://openrouter.ai/api/v1'},{name:'My own server or computer',url:''}];
+export function remoteKey(){try{return localStorage.getItem(KEY)||''}catch{return ''}}
+export function setRemoteKey(k){try{k?localStorage.setItem(KEY,k):localStorage.removeItem(KEY)}catch{}}
+const base=u=>String(u||'').trim().replace(/\/+$/,''),auth=()=>remoteKey()?{Authorization:'Bearer '+remoteKey()}:{};
+function fail(status){return Error(status===401||status===403?'The key was not accepted.':status===404?'That address or model was not found.':status===429?'The service is busy or the limit was reached. Try again shortly.':`The brain service answered with error ${status}.`)}
+export async function remoteModels(url){let r;try{r=await fetch(base(url)+'/models',{headers:auth()})}catch{throw Error('Could not reach that address.')}if(!r.ok)throw fail(r.status);const d=await r.json();return (d.data||d.models||[]).map(m=>m.id||m.name).filter(Boolean).sort()}
+// Streams a reply from the service. `signal` lets a prepared answer be dropped if the person kept talking.
+export async function remoteReply(ctx,cfg,onText=()=>{},signal){let r;try{r=await fetch(base(cfg.url)+'/chat/completions',{method:'POST',signal,headers:{'Content-Type':'application/json',...auth()},body:JSON.stringify({model:cfg.model,messages:brainPrompt(ctx),stream:true,temperature:0.8,max_tokens:200})})}catch(e){if(e.name==='AbortError')throw e;throw Error('Could not reach the brain service.')}if(!r.ok)throw fail(r.status);const reader=r.body.getReader(),dec=new TextDecoder();let buf='',raw='';for(;;){const {done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop();for(const line of lines){const l=line.trim();if(!l.startsWith('data:'))continue;const d=l.slice(5).trim();if(!d||d==='[DONE]')continue;try{raw+=JSON.parse(d).choices?.[0]?.delta?.content||''}catch{}const t=parseReply(raw,ctx.name).text;if(t)onText(t)}}return parseReply(raw,ctx.name)}
