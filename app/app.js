@@ -1,6 +1,6 @@
-import {validLoop,storyText,demoReply,pcmToWav} from './core.mjs';
+import {validLoop,storyText,demoReply,pcmToWav} from './core.mjs?v=2';
 import * as clone from './clone.mjs?v=4';
-import * as brain from './brain.mjs';
+import * as brain from './brain.mjs?v=1';
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const seed={cast:[{id:'mira',name:'Mira',role:'Explorer',persona:'Warm, curious and quietly brave. A traveler with a love of unfamiliar places.',image:'assets/mira.webp'},{id:'you',name:'Your character',role:'Protagonist',persona:'Write your own identity and bring your own portrait.',image:''}],scenes:[{id:'observatory',name:'Twilight observatory',details:'A glass observatory overlooks mountains as the last light fades.',art:''},{id:'city',name:'The midnight city',details:'Lanterns light the streets of an unfamiliar city. A new journey is about to begin.',art:''},{id:'garden',name:'A hidden garden',details:'A quiet garden behind an old library, scented with rain.',art:''}],sessions:[],samples:[],selection:{player:'you',partner:'mira',scene:'observatory',voice:''},active:null};
 let state;try{state=JSON.parse(localStorage.getItem('echo-vision-studio-v2'))}catch{}if(!state?.cast||!state?.selection)state=structuredClone(seed);
