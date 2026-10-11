@@ -13,11 +13,11 @@ Serve `app/` with any static web server. No build or dependency installation is 
 - Browser speech synthesis voice enumeration, preview and selection; per-session voice retained.
 - Browser speech recognition when supported and permitted; transcribes into composer for review before sending.
 - Local conversation history, session selection, manually editable story drafts and text export.
-- Authorized voice sample upload and playback. Samples are NOT cloned voices.
+- On-device voice cloning: record or upload 5–10 seconds, then hear any line in that voice and save it as WAV. Runs in the browser with Pocket TTS (Kyutai, CC BY 4.0) through the MIT-licensed pocket-voice worker in `app/vendor/pocket-voice/` (see its NOTICE.md). The first use downloads the model from Hugging Face and ONNX Runtime from jsDelivr; samples and text are not uploaded. A consent checkbox is required before a sample is saved.
 - Clearly labeled scripted dialogue mode for interface testing. Turn it off to write manual dialogue through the storybook.
 
 ## Not connected
-No LLM, generated narration, automatic persona extraction, voice cloning, cloud sync, MP3 generation or audio export. No API keys are collected. Browser TTS/recognition availability varies and browser service voices/recognition may use the device vendor's services. Private hosting and browser-local storage are distinct: files do not sync across devices. Clearing browser storage loses local stories/media; export story text to retain it. Draft edits are not overwritten when new transcript messages arrive.
+No LLM, generated narration, automatic persona extraction, cloud sync or MP3 export. Cloned voices are English-only for now and are rebuilt from the saved sample on each visit. No API keys are collected. Browser TTS/recognition availability varies and browser service voices/recognition may use the device vendor's services. Private hosting and browser-local storage are distinct: files do not sync across devices. Clearing browser storage loses local stories/media; export story text to retain it. Draft edits are not overwritten when new transcript messages arrive.
 
 ## Next integration
 Use a server-side provider adapter for character dialogue and TTS; keep credentials out of the client. Dialogue requests should carry character identity/persona, selected scene, protected memories and recent messages. Return reply text and an emotion enum (normal, happy, sad, surprised, scared). Add authenticated cloud persistence and a consent-backed voice provider before activating cloning. Current browser voices are temporary previews, not guaranteed consistent across devices.
