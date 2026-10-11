@@ -3,3 +3,23 @@
 @media(min-width:1000px){main{max-width:650px;margin:0 auto}.hero{height:360px}}@media(max-width:800px){.shell{display:block;padding:0}.rail{padding:14px 15px 0}.rail .brand{display:inline-block;margin:0;font-size:12px}.rail .brand span{font-size:20px}.rail h1,.rail .intro,.rail>.eyebrow,.build{display:none}.rail nav{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:12px 0}.rail nav button{font-size:12px;padding:8px 2px;min-height:40px;white-space:nowrap;text-align:center}.rail nav i,.long{display:none}.short{display:inline}.shell:has(main.chatView){display:flex;flex-direction:column;gap:0;height:100dvh}.shell main.chatView{flex:1;min-height:0;display:flex;flex-direction:column}.chatView .hero{flex:0 0 auto;height:30dvh;min-height:190px}.chatView .messages{flex:1;height:auto;min-height:110px}.shell main{border-radius:20px 20px 0 0;border-bottom:0;min-height:calc(100dvh - 105px);max-width:100%}.content{padding:23px 18px}.card img,.abstract{height:160px}.grid{gap:10px}.card .info{padding:12px}.card strong{font-size:15px}.hero{height:32dvh;min-height:235px}.messages{height:29dvh;min-height:175px}.composer{padding:12px}.chatHeader{padding:13px 16px}.demoLine{padding:0 15px 13px}.brand{letter-spacing:3px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 
 .hero.staged .stageBg{overflow:hidden}.hero.staged .stageBg>.stageEvent{position:absolute;inset:0;opacity:0;transition:opacity .3s}.hero.staged .stageBg>.stageEvent.on{opacity:1}
+
+/* Video view: the stage fills the screen and the chat log stays out of the way. */
+body.call{overflow:hidden}body.call .rail{display:none}
+body.call #stage{position:fixed;inset:0;width:auto;height:auto;margin:0;border:0;border-radius:0;z-index:20;touch-action:none;background:#05070d}
+body.call #stage .overlay{display:none}
+body.call .hero.staged .stageBg{transform:translate(calc(var(--px,0)*-7%),calc(var(--py,0)*-5%)) scale(1.16)}
+body.call .hero.staged .stageFg{transform-origin:50% 100%;transform:translate(calc(var(--px,0)*-11%),calc(4% + var(--py,0)*-3%)) scale(1.08)}
+body.call .chatHeader{position:fixed;top:0;left:0;right:0;z-index:30;margin:0;border:0;border-radius:0;background:linear-gradient(#000b,#0000);padding:max(10px,env(safe-area-inset-top)) 12px 26px}
+body.call .chatHeader .avatar,body.call #voiceSettings,body.call #bookOpen{display:none}
+body.call .chatHeader .mini{background:#0008;backdrop-filter:blur(8px)}
+body.call .messages,body.call .buildTag,body.call #message,body.call .composer .primary,body.call .demoLine label{display:none}
+body.call .composer{position:fixed;left:0;right:0;bottom:max(18px,env(safe-area-inset-bottom));z-index:30;display:flex;justify-content:center;background:none;border:0;padding:0;margin:0;pointer-events:none}
+body.call #mic{pointer-events:auto;width:68px;height:68px;border-radius:50%;font-size:28px;background:#000a;border:1px solid #fff5;backdrop-filter:blur(8px)}
+body.call #mic.on{background:var(--violet);box-shadow:0 0 0 7px #9e83ff44}
+body.call .demoLine{position:fixed;left:0;right:0;bottom:calc(max(18px,env(safe-area-inset-bottom)) + 78px);z-index:30;margin:0;padding:0 16px;background:none;border:0;display:block;text-align:center;pointer-events:none}
+body.call .hfStatus{color:#fff;text-shadow:0 1px 6px #000,0 0 2px #000;font-size:14px}
+body.call .chips{position:fixed;left:0;right:0;bottom:calc(max(18px,env(safe-area-inset-bottom)) + 112px);z-index:30;display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:0;padding:0 12px}
+body.call .chips .mini{background:#0008;backdrop-filter:blur(8px)}
+#panLock.on{border-color:var(--violet)}#toast{z-index:60}
+@media(orientation:landscape){body.call .composer{left:auto;right:22px;justify-content:flex-end}body.call .chips{left:16px;right:120px;bottom:max(18px,env(safe-area-inset-bottom));justify-content:flex-start}body.call .demoLine{bottom:auto;top:56px}}
