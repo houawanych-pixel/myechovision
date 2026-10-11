@@ -28,7 +28,7 @@ export default {
       const text = await request.text();
       if (text.length > 60000) return new Response('Too large', { status: 413, headers: cors });
       const json = JSON.parse(text);
-      json.max_tokens = Math.min(json.max_tokens || 200, 400); // keep replies short and costs predictable
+      json.max_tokens = Math.min(json.max_tokens || 300, 2000); // keep replies short and costs predictable
       body = JSON.stringify(json);
     }
     const upstream = await fetch(env.UPSTREAM.replace(/\/+$/, '') + (isModels ? '/models' : '/chat/completions'), {
