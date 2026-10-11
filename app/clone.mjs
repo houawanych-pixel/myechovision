@@ -6,6 +6,13 @@ async function workerURL(){const u=new URL('./vendor/pocket-voice/inference-work
 let worker,loading,op=null,job=null,ctx,nextT=0,sources=[],encoded=null,token=0,statusFn=()=>{};
 const cache=new Map();
 export const sampleRate=RATE;
+// Optional saved-audio store ({get(key)->Blob|null, put(key,Blob)}). Lines are kept as 16-bit audio.
+let store=null;
+export function setStore(x){store=x}
+async function loadSaved(key){if(!store)return null;try{const b=await store.get(key);if(!b)return null;const i=new Int16Array(await b.arrayBuffer()),f=new Float32Array(i.length);for(let k=0;k<i.length;k++)f[k]=i[k]/32768;return f}catch{return null}}
+function keepSaved(key,pcm){if(!store)return;try{const i=new Int16Array(pcm.length);for(let k=0;k<pcm.length;k++){const x=Math.max(-1,Math.min(1,pcm[k]));i[k]=x<0?x*32768:x*32767}store.put(key,new Blob([i.buffer]))}catch{}}
+// True when this line is already prepared for this voice (in memory or saved on the device).
+export async function has(text,id){const key=id+'\n'+String(text||'').trim();return cache.has(key)||!!(store&&await store.get(key).catch(()=>null))}
 export function onStatus(fn){statusFn=fn}
 function audio(){ctx??=new (window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume();return ctx}
 function begin(kind){const o={kind,chunks:[]};o.done=new Promise((resolve,reject)=>{o.resolve=resolve;o.reject=reject});op=o;return o}
@@ -31,10 +38,10 @@ export function speak(text,id,getBlob,{quiet=false}={}){audio();text=String(text
   if(cache.has(key)){const pcm=cache.get(key);return quiet?Promise.resolve(pcm):stop().then(()=>{play(pcm);return pcm})}
   if(job?.key===key){if(!quiet&&job.quiet){job.quiet=false;silence();statusFn('Getting the voice ready…');job.unquiet?.()}return job.promise}
   if(quiet&&job)return Promise.resolve(null);
-  const j={key,quiet};job=j;j.promise=(async()=>{await halt();const my=++token;
+  const j={key,quiet};job=j;j.promise=(async()=>{await halt();const my=++token;const saved=await loadSaved(key);if(my!==token)return null;if(saved){cache.set(key,saved);if(!j.quiet)play(saved);return saved}
     await load();if(my!==token)return null;
     if(encoded!==id){tell('Learning the voice from your sample…');const pcm=await prep(await getBlob());if(my!==token)return null;encoded=null;const o=begin('encode');worker.postMessage({type:'encode_voice',data:{audio:pcm}},[pcm.buffer]);await o.done;encoded=id}
-    if(my!==token)return null;tell('Speaking in the cloned voice…');const o=begin('gen');o.job=j;j.unquiet=()=>play(join(o.chunks.slice(0,o.chunks.length-(o.part?.length||0))));worker.postMessage({type:'generate',data:{text,voice:'custom'}});const out=await o.done;if(o.stopped||!out.length)return null;if(cache.size>40)cache.delete(cache.keys().next().value);cache.set(key,out);return out})().finally(()=>{if(job===j)job=null});return j.promise}
+    if(my!==token)return null;tell('Speaking in the cloned voice…');const o=begin('gen');o.job=j;j.unquiet=()=>play(join(o.chunks.slice(0,o.chunks.length-(o.part?.length||0))));worker.postMessage({type:'generate',data:{text,voice:'custom'}});const out=await o.done;if(o.stopped||!out.length)return null;if(cache.size>40)cache.delete(cache.keys().next().value);cache.set(key,out);keepSaved(key,out);return out})().finally(()=>{if(job===j)job=null});return j.promise}
 // Resolves once everything queued for playback has finished sounding.
 export function finished(){return new Promise(r=>{const check=()=>sources.length?setTimeout(check,150):r();check()})}
 export function forget(id){if(encoded===id)encoded=null;for(const k of [...cache.keys()])if(k.startsWith(id+'\n'))cache.delete(k)}
