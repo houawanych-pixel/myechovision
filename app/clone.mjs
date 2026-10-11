@@ -35,4 +35,6 @@ export function speak(text,id,getBlob,{quiet=false}={}){audio();text=String(text
     await load();if(my!==token)return null;
     if(encoded!==id){tell('Learning the voice from your sample…');const pcm=await prep(await getBlob());if(my!==token)return null;encoded=null;const o=begin('encode');worker.postMessage({type:'encode_voice',data:{audio:pcm}},[pcm.buffer]);await o.done;encoded=id}
     if(my!==token)return null;tell('Speaking in the cloned voice…');const o=begin('gen');o.job=j;j.unquiet=()=>play(join(o.chunks.slice(0,o.chunks.length-(o.part?.length||0))));worker.postMessage({type:'generate',data:{text,voice:'custom'}});const out=await o.done;if(o.stopped||!out.length)return null;if(cache.size>40)cache.delete(cache.keys().next().value);cache.set(key,out);return out})().finally(()=>{if(job===j)job=null});return j.promise}
+// Resolves once everything queued for playback has finished sounding.
+export function finished(){return new Promise(r=>{const check=()=>sources.length?setTimeout(check,150):r();check()})}
 export function forget(id){if(encoded===id)encoded=null;for(const k of [...cache.keys()])if(k.startsWith(id+'\n'))cache.delete(k)}
