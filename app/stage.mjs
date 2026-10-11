@@ -18,6 +18,7 @@ export function createStage(host){
   const bgBox=document.createElement('div'),fgBox=document.createElement('div');bgBox.className='stageBg';fgBox.className='stageFg';host.prepend(fgBox);host.prepend(bgBox);
   let actx=null,amb=null,gain=null,ambVol=0.5,wake=null;
   const stopAmbient=()=>{try{amb?.stop()}catch{}amb=null;gain=null;if(wake){document.removeEventListener('pointerdown',wake,true);wake=null}};
+  let evTimer=0,playEvent=null;
   let clips={},chroma='none',spill=0.8,els={},current=null,override=null,holdTimer=0,talking=false,raf=0,dead=false,canvas=null,gl=null,uni=null,tex=null,tex2=null,drawnStill=null,pendingFade=false,fadeStart=0,hasDrawn=false;
   const FADE=260,fading=()=>fadeStart&&performance.now()-fadeStart<FADE+40;
   const setup=()=>{if(canvas||chroma==='none')return;const c=document.createElement('canvas'),g=c.getContext('webgl',{premultipliedAlpha:true,alpha:true,preserveDrawingBuffer:true});if(!g)return;const sh=(type,src)=>{const s=g.createShader(type);g.shaderSource(s,src);g.compileShader(s);return s},pr=g.createProgram();g.attachShader(pr,sh(g.VERTEX_SHADER,VS));g.attachShader(pr,sh(g.FRAGMENT_SHADER,FS));g.linkProgram(pr);if(!g.getProgramParameter(pr,g.LINK_STATUS))return;g.useProgram(pr);const b=g.createBuffer();g.bindBuffer(g.ARRAY_BUFFER,b);g.bufferData(g.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),g.STATIC_DRAW);const loc=g.getAttribLocation(pr,'p');g.enableVertexAttribArray(loc);g.vertexAttribPointer(loc,2,g.FLOAT,false,0,0);const mk=unit=>{const t=g.createTexture();g.activeTexture(unit);g.bindTexture(g.TEXTURE_2D,t);for(const [k,val] of [[g.TEXTURE_WRAP_S,g.CLAMP_TO_EDGE],[g.TEXTURE_WRAP_T,g.CLAMP_TO_EDGE],[g.TEXTURE_MIN_FILTER,g.LINEAR],[g.TEXTURE_MAG_FILTER,g.LINEAR]])g.texParameteri(g.TEXTURE_2D,k,val);return t};tex2=mk(g.TEXTURE1);g.texImage2D(g.TEXTURE_2D,0,g.RGBA,1,1,0,g.RGBA,g.UNSIGNED_BYTE,new Uint8Array(4));tex=mk(g.TEXTURE0);g.uniform1i(g.getUniformLocation(pr,'t'),0);g.uniform1i(g.getUniformLocation(pr,'prev'),1);uni={fade:g.getUniformLocation(pr,'fade'),blue:g.getUniformLocation(pr,'blue'),sim:g.getUniformLocation(pr,'sim'),soft:g.getUniformLocation(pr,'soft'),spill:g.getUniformLocation(pr,'spill')};g.clearColor(0,0,0,0);canvas=c;gl=g;c.className='stageCanvas'};
@@ -30,7 +31,11 @@ export function createStage(host){
   return {
     // clips: {slot:{src,type}}. chroma: 'none' | 'green' | 'blue'. spill: 0..1 edge clean-up.
     setCharacter(next,key='none',clean=0.8){clips=next||{};chroma=key;spill=clean;els={};current=null;override=null;apply()},
-    setBackground(bg){bgBox.replaceChildren();if(!bg?.src)return;const el=element(bg);if(el.tagName==='VIDEO'){el.loop=true;el.play().catch(()=>{})}bgBox.append(el)},
+    // bg: the still (or looping video) behind her. events: short clips that play once on top of it now and then
+    // (a light flickers, a door opens), each starting and ending on the still, so the place feels alive without a visible loop.
+    setBackground(bg,events=[]){clearTimeout(evTimer);evTimer=0;bgBox.replaceChildren();if(!bg?.src)return;const el=element(bg);if(el.tagName==='VIDEO'){el.loop=true;el.play().catch(()=>{})}bgBox.append(el);if(!events.length)return;const ev=document.createElement('video');ev.className='stageEvent';ev.playsInline=true;ev.preload='auto';bgBox.append(ev);let last=-1;const wait=first=>{evTimer=setTimeout(run,first?4000+Math.random()*5000:12000+Math.random()*16000)},run=()=>{if(dead)return;if(document.hidden)return wait();let i=Math.floor(Math.random()*events.length);if(events.length>1&&i===last)i=(i+1)%events.length;last=i;const e=events[i];ev.src=e.src;ev.muted=!e.sound;ev.volume=0.45;ev.onplaying=()=>ev.classList.add('on');ev.onended=()=>{ev.classList.remove('on');wait()};ev.onerror=()=>wait();ev.play().catch(()=>{ev.muted=true;ev.play().catch(()=>wait())})};playEvent=run;wait(true)},
+    // Plays a background event now (used by tests and the "try it" button).
+    event(){clearTimeout(evTimer);playEvent?.()},
     has:key=>!!clips[key],
     // Shows a slot. A video plays once from its first frame; a picture is held for `hold` ms. Then it returns to talking or normal.
     // Returns false when the character has nothing for that slot. `force` lets an action interrupt whatever is showing.
@@ -45,4 +50,4 @@ export function createStage(host){
     get showing(){return current},
     get keyed(){return !!gl},
     get canvas(){return canvas},
-    destroy(){dead=true;stopAmbient();try{actx?.close()}catch{}actx=null;cancelAnimationFrame(raf);clearTimeout(holdTimer);for(const e of Object.values(els))if(e.tagName==='VIDEO'){e.pause();e.removeAttribute('src')}bgBox.remove();fgBox.remove()}}}
+    destroy(){dead=true;clearTimeout(evTimer);stopAmbient();try{actx?.close()}catch{}actx=null;cancelAnimationFrame(raf);clearTimeout(holdTimer);for(const e of Object.values(els))if(e.tagName==='VIDEO'){e.pause();e.removeAttribute('src')}bgBox.remove();fgBox.remove()}}}
