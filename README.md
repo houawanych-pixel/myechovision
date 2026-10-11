@@ -29,4 +29,6 @@ Logic tests cover loop boundaries, transcript export and scene-aware demo text. 
 
 ## Repository layout
 
-The existing root landing page and CNAME are preserved. The prototype lives in `app/` and uses relative asset paths. GitHub Pages can serve it at `/app/` using the existing hosting configuration. Code development continues in this repository; the earlier Sites preview is a separate snapshot, not automatically synchronized.
+The prototype lives in `app/` and uses relative asset paths. Public URL: https://houawanych-pixel.github.io/myechovision/app/
+
+The root `CNAME` (`myechovision.com`) is intentionally removed while the custom domain's DNS/HTTPS is broken. Do not restore it until the domain serves a valid certificate; the value is recoverable from Git history. Code development continues in this repository; the earlier Sites preview is a separate snapshot, not automatically synchronized.
