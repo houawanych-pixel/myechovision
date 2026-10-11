@@ -1,6 +1,6 @@
 // On-device character "brain" (test). Runs a small open language model in the browser with WebLLM
 // (see vendor/web-llm/NOTICE.md). Needs WebGPU. Nothing typed is sent to a server.
-import {brainPrompt,parseReply} from './core.mjs?v=3';
+import {brainPrompt,parseReply} from './core.mjs?v=4';
 export const MODELS={small:{label:'Small',size:'about 0.7 GB',base:'Llama-3.2-1B-Instruct'},large:{label:'Larger',size:'about 1.8 GB',base:'Llama-3.2-3B-Instruct'}};
 let engine=null,loadedId=null,loading=null,busy=false,statusFn=()=>{};
 export function onStatus(fn){statusFn=fn}
@@ -25,3 +25,13 @@ export function pickModel(ids,current){if(current&&ids.includes(current))return 
 export async function remoteModels(url){let r;try{r=await fetch(base(url)+'/models',{headers:auth()})}catch{throw Error('Could not reach that address.')}if(!r.ok)throw await fail(r);const d=await r.json();return (d.data||d.models||[]).filter(m=>m.active!==false).map(m=>m.id||m.name).filter(Boolean).filter(chatModel).sort()}
 // Streams a reply from the service. `signal` lets a prepared answer be dropped if the person kept talking.
 export async function remoteReply(ctx,cfg,onText=()=>{},signal){let r;try{r=await fetch(base(cfg.url)+'/chat/completions',{method:'POST',signal,headers:{'Content-Type':'application/json',...auth()},body:JSON.stringify({model:cfg.model,messages:brainPrompt(ctx),stream:true,temperature:0.8,max_tokens:200})})}catch(e){if(e.name==='AbortError')throw e;throw Error('Could not reach the brain service.')}if(!r.ok)throw await fail(r);const reader=r.body.getReader(),dec=new TextDecoder();let buf='',raw='';for(;;){const {done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop();for(const line of lines){const l=line.trim();if(!l.startsWith('data:'))continue;const d=l.slice(5).trim();if(!d||d==='[DONE]')continue;try{raw+=JSON.parse(d).choices?.[0]?.delta?.content||''}catch{}const t=parseReply(raw,ctx.name).text;if(t)onText(t)}}return parseReply(raw,ctx.name)}
+
+// ---- Sight: a vision model looks at a portrait or scene once and writes a short description.
+// That text is saved with the character or scene and given to the brain, so no image is sent per message.
+const VISION=[/llama-4-(scout|maverick)/i,/scout|maverick/i,/vision/i,/llava|pixtral|qwen.*vl|gemma-3|gpt-4o|gpt-4\.1|gpt-5|claude|gemini/i];
+let visionCache={};
+export async function visionModel(url){const u=base(url);if(u in visionCache)return visionCache[u];let r;try{r=await fetch(u+'/models',{headers:auth()})}catch{return null}if(!r.ok)return null;const d=await r.json(),ids=(d.data||d.models||[]).filter(m=>m.active!==false).map(m=>m.id||m.name).filter(Boolean).filter(i=>!/whisper|tts|guard|embed|rerank/i.test(i));let hit=null;for(const re of VISION){hit=ids.find(i=>re.test(i));if(hit)break}return visionCache[u]=hit}
+async function toJpeg(blob){const bmp=await createImageBitmap(blob),k=Math.min(1,768/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);return c.toDataURL('image/jpeg',0.85)}
+const ASK={character:'Describe only what is visible of this character, in 2 or 3 short plain sentences for a storyteller: hair, eyes, and each piece of clothing with its real colors, plus any notable item. No name, no guesses about personality, no opening phrase.',scene:'Describe only what is visible in this place, in 2 or 3 short plain sentences for a storyteller: the setting, time of day, main colors and notable objects. No opening phrase.'};
+// kind: 'character' or 'scene'. Returns the description, or '' when the service has no model that can see.
+export async function describeImage(cfg,blob,kind){const model=await visionModel(cfg.url);if(!model)return '';const url=await toJpeg(blob);const r=await fetch(base(cfg.url)+'/chat/completions',{method:'POST',headers:{'Content-Type':'application/json',...auth()},body:JSON.stringify({model,temperature:0.2,max_tokens:160,messages:[{role:'user',content:[{type:'text',text:ASK[kind]||ASK.character},{type:'image_url',image_url:{url}}]}]})});if(!r.ok)throw await fail(r);const d=await r.json();return String(d.choices?.[0]?.message?.content||'').replace(/<think>[\s\S]*?<\/think>/g,'').replace(/\s+/g,' ').trim().slice(0,600)}

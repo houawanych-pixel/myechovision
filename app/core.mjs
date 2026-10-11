@@ -3,12 +3,15 @@ export function storyText(session,cast,scenes){const a=cast.find(c=>c.id===sessi
 export function demoReply(text,name,scene,index){const t=text.toLowerCase();if(/hello|hey|hi\b/.test(t))return `Hey. I'm ${name}. What brought you to ${scene}?`;if(/where|go|explore/.test(t))return `Let's look around ${scene} together. Do you want to take the quiet path, or see where everyone is heading?`;if(/afraid|scared|worr/.test(t))return `We can take this slowly. Tell me what is worrying you, and we'll decide our next step together.`;return [`What would you like to happen next? I'll follow your lead.`,`Tell me a little more. What does that mean to you?`,`Then let's make that our next move. What do you notice around us?`][index%3]}
 export function pcmToWav(pcm,rate){const n=pcm.length,buf=new ArrayBuffer(44+n*2),v=new DataView(buf),str=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))};str(0,'RIFF');v.setUint32(4,36+n*2,true);str(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);str(36,'data');v.setUint32(40,n*2,true);for(let i=0;i<n;i++){const x=Math.max(-1,Math.min(1,pcm[i]));v.setInt16(44+i*2,x<0?x*0x8000:x*0x7fff,true)}return buf}
 export const EMOTIONS=['normal','happy','sad','surprised','scared'];
-// Builds the messages for the character brain. ctx: {name,role,persona,scene,sceneDetails,player,playerPersona,messages:[{role,text}]}
+// Builds the messages for the character brain. ctx: {name,role,persona,look,scene,sceneDetails,sceneLook,player,playerPersona,playerLook,messages:[{role,text}]}
 export function brainPrompt(ctx){const sys=`You are ${ctx.name}${ctx.role?`, ${ctx.role}`:''}, a character in an interactive story. Stay in character at all times.
-About you: ${ctx.persona||'No notes yet.'}
+About you: ${ctx.persona||'No notes yet.'}${ctx.look?`
+How you look right now: ${ctx.look}`:''}
 Where you are: ${ctx.scene||'An unnamed place'}${ctx.sceneDetails?`. ${ctx.sceneDetails}`:''}
-You are talking with ${ctx.player||'a traveler'}${ctx.playerPersona?` (${ctx.playerPersona})`:''}.
-Rules: Answer with spoken words only, 1 to 3 short sentences. No narration, no stage directions, no asterisks. Never say you are an AI.
+You are talking with ${ctx.player||'a traveler'}${ctx.playerPersona?` (${ctx.playerPersona})`:''}.${ctx.playerLook?`
+How ${ctx.player||'they'} looks: ${ctx.playerLook}`:''}${ctx.sceneLook?`
+What you can both see around you: ${ctx.sceneLook}`:''}
+Rules: Answer with spoken words only, 1 to 3 short sentences. No narration, no stage directions, no asterisks. Never say you are an AI. When clothing, colors or surroundings come up, go by the notes above; if someone gets a detail wrong, gently say what is really there.
 Start every answer with one feeling tag from this list: [normal] [happy] [sad] [surprised] [scared]. Example: [happy] It is good to see you again.`;return [{role:'system',content:sys},...(ctx.messages||[]).slice(-12).map(m=>({role:m.role==='user'?'user':'assistant',content:m.role==='user'?m.text:`[${EMOTIONS.includes(m.emotion)?m.emotion:'normal'}] ${m.text}`}))]}
 // Splits a raw model answer into {emotion,text}. Tolerates a missing tag, a "Name:" prefix, quotes and *actions*.
 export function parseReply(raw,name=''){let t=String(raw||'').replace(/<think>[\s\S]*?(<\/think>|$)/g,'').trim(),emotion='normal';const m=t.match(/^[\[(]\s*(normal|happy|sad|surprised|scared)\s*[\])]?[:\s-]*/i);if(m){emotion=m[1].toLowerCase();t=t.slice(m[0].length)}t=t.replace(/\*[^*]*\*/g,' ').replace(/\[(normal|happy|sad|surprised|scared)\]/gi,' ');if(name){const n=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');t=t.replace(new RegExp(`^\\s*${n}\\s*:\\s*`,'i'),'')}t=t.replace(/\s+/g,' ').trim().replace(/^["“](.*)["”]$/,'$1').trim();return {emotion,text:t}}
