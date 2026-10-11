@@ -1,0 +1,21 @@
+Pocket TTS browser model (Kyutai, CC BY 4.0), ONNX export by KevinAHM.
+Source: https://huggingface.co/spaces/KevinAHM/pocket-tts-web/resolve/main/onnx   Languages: english_2026-04   ONNX Runtime Web: 1.18.0 (MIT)
+Terms: no voice cloning or impersonation without explicit, lawful consent.
+
+f46edf4f7007b7ba4ea58831f49d003e59e167b4641c44bb3addfe9231a780b1  models/onnx/english_2026-04/bos_before_voice.npy
+bab643150f437f37df080a710520ff39ed9ebd9a339f8ebdc739f7eddfc28b3f  models/onnx/english_2026-04/bundle.json
+3dd781ee5abee9e195320bf0106bebd6372a852b3b36352524ee78b40554635d  models/onnx/english_2026-04/flow_lm_flow_int8.onnx
+f9bd8106b79a0192c1c43399ab938fb24900a95c1c599870d75a884e99000116  models/onnx/english_2026-04/flow_lm_main_int8.onnx
+3630450a3297a101792a6ac66619ebc70ab916b265e6220c2afaef8b1673f925  models/onnx/english_2026-04/mimi_decoder_int8.onnx
+abb46f1ad0b83c3840fe38c3652ab0eda7d1d97a63f1953bbbff5d04d8f4c855  models/onnx/english_2026-04/mimi_encoder_int8.onnx
+24c0642bff11a4e1435c004d0c2aa6c68e093fadfa35f0f0dba849ac67f25ac3  models/onnx/english_2026-04/text_conditioner_int8.onnx
+d461765ae179566678c93091c5fa6f2984c31bbe990bf1aa62d92c64d91bc3f6  models/onnx/english_2026-04/tokenizer.model
+1715d915b6d3ed05916039d4ecc5757858650f5509e2874749c666352b31efdb  vendor/ort/ort-training-wasm-simd.wasm
+fb873e635e91405036a43266c26dddec30d06796b739340da41666d15fe352c9  vendor/ort/ort-wasm-simd-threaded.jsep.wasm
+86e907409c5a79b7475b6ca690e404fa5c5f5714054a3926f3b0bf40559d7d2e  vendor/ort/ort-wasm-simd-threaded.wasm
+b7b662a49e0a298dabf88cf7db67eeb0ffa0894d9f72bd246455e5107aa659b6  vendor/ort/ort-wasm-simd.jsep.wasm
+f533b5f21790563d7556c611c3835ac65848ee326da2689aac54ed7d9cc8c6a4  vendor/ort/ort-wasm-simd.wasm
+54c445435526af7138c6a2438b2e8103c87d4eb3e972649f2eb5fd713fadfa5c  vendor/ort/ort-wasm-threaded.wasm
+ebe7ec327f83aabc07e3b58487522481ccff10941f24182ab0428d0123652ff2  vendor/ort/ort-wasm.wasm
+13843670a492f77d8afa5ca2bb6816c67f2b1444420a7d309b82dd700692ee16  vendor/ort/ort.all.min.js
+74945866728300a05746a37387ac48863a8be5cdc3760304b47d0136d7d0dc5b  vendor/ort/ort.min.js
