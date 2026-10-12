@@ -24,3 +24,4 @@ body.call .chips .mini{background:#0008;backdrop-filter:blur(8px)}
 #panLock.on{border-color:var(--violet)}#toast{z-index:60}
 @media(orientation:landscape){body.call .composer{left:auto;right:22px;justify-content:flex-end}body.call .chips{left:16px;right:120px;bottom:max(18px,env(safe-area-inset-bottom));justify-content:flex-start}body.call .demoLine{bottom:auto;top:56px}}
 @media(orientation:landscape){body.call .hero.staged .stageBg{transform:translate(calc(var(--px,0)*-2.2%),0) scale(1.06)}body.call .hero.staged .stageFg{transform:translate(calc(var(--px,0)*-1%),2%) scale(1.03)}}
+#goChips{display:contents}.chips:empty{display:none}.mini.go{border-color:#5f7fa8}
