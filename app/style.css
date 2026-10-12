@@ -25,5 +25,16 @@ body.call .chips .mini{background:#0008;backdrop-filter:blur(8px)}
 @media(orientation:landscape){body.call .composer{left:auto;right:22px;justify-content:flex-end}body.call .chips{left:16px;right:120px;bottom:max(18px,env(safe-area-inset-bottom));justify-content:flex-start}body.call .demoLine{bottom:auto;top:56px}}
 @media(orientation:landscape){body.call .hero.staged .stageBg{transform:translate(calc(var(--px,0)*-2.2%),0) scale(1.06)}body.call .hero.staged .stageFg{transform:translate(calc(var(--px,0)*-1%),2%) scale(1.03)}}
 #goChips{display:contents}.chips:empty{display:none}.mini.go{border-color:#5f7fa8}
-.stageStars{position:absolute;inset:0;width:100%;height:100%}.hero.staged.keyed.fill .stageFg>*{object-fit:cover;object-position:var(--fgx,50%) 50%;transition:object-position 3.6s ease-in-out}body.call .hero.staged.fill .stageFg{transform:translate(calc(var(--px,0)*-2%),calc(var(--py,0)*-1%)) scale(1.04);transform-origin:50% 50%}body.call .hero.staged.fill .stageBg{transform:translate(calc(var(--px,0)*-4%),calc(var(--py,0)*-2%)) scale(1.08)}
-body.cockpit [data-act]{display:none}@media(orientation:portrait){.hero.staged.keyed.fill .stageFg>*{object-fit:contain;object-position:50% 50%;transform:scale(1.75);transform-origin:var(--fgx,50%) 50%;transition:transform-origin 3.6s ease-in-out}}
+.stageStars{position:absolute;inset:0;width:100%;height:100%}.hero.staged.keyed.fill .stageFg>*{object-fit:cover;object-position:var(--fgx,50%) var(--fgy,50%);transition:object-position 4.6s ease-in-out}body.call .hero.staged.fill .stageFg{transform:translate(calc(var(--px,0)*-2%),calc(var(--py,0)*-1%)) scale(1.04);transform-origin:50% 50%}body.call .hero.staged.fill .stageBg{transform:translate(calc(var(--px,0)*-4%),calc(var(--py,0)*-2%)) scale(1.08)}
+body.cockpit [data-act]{display:none}@media(orientation:portrait){.hero.staged.keyed.fill .stageFg>*{object-fit:contain;object-position:50% 50%;transform:scale(1.75);transform-origin:var(--fgx,50%) 50%;transition:transform-origin 4.6s ease-in-out}}
+
+/* Flying: sky behind the windows, thumb sticks, warp flash */
+.warpFlash{position:absolute;inset:0;background:#fff;opacity:0;transition:opacity .25s;pointer-events:none}
+#flyPad{position:fixed;left:0;right:0;bottom:0;height:0;z-index:31;pointer-events:none}
+#flyPad .stick{position:fixed;bottom:max(22px,env(safe-area-inset-bottom));width:112px;height:112px;border-radius:50%;background:#0007;border:1px solid #fff5;backdrop-filter:blur(6px);pointer-events:auto;touch-action:none}
+#flyPad .stick[data-stick=steer]{left:18px}#flyPad .stick[data-stick=speed]{right:18px}
+#flyPad .stick i{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px;border-radius:50%;background:#ffffff30;border:1px solid #fffa;pointer-events:none}
+#flyPad .stick span{position:absolute;left:0;right:0;top:-20px;text-align:center;font-size:11px;color:#fffc;text-shadow:0 1px 4px #000}
+body.flying .chips{top:calc(max(10px,env(safe-area-inset-top)) + 56px);bottom:auto}
+body.flying .composer{left:0;right:0;justify-content:center}
+body.flying .demoLine{bottom:calc(max(18px,env(safe-area-inset-bottom)) + 80px);top:auto}
