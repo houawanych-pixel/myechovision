@@ -1,0 +1,41 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#0b0e19"><title>My Echo Vision — Walk the ship</title>
+<script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js"}}</script>
+<style>
+:root{color-scheme:dark;--bg:#0b0e19;--panel:rgba(16,20,34,.86);--line:#2a3149;--text:#e8ecf5;--muted:#a3adc5;--cyan:#90e0e4;--amber:#ffc56b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+#view{position:fixed;inset:0;width:100%;height:100%;display:block}
+.hud{position:fixed;left:0;right:0;top:0;display:flex;align-items:center;gap:10px;padding:max(10px,env(safe-area-inset-top)) 14px 10px;pointer-events:none}
+.hud a,.hud button{pointer-events:auto}
+.back{color:var(--text);text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px}
+.where{margin-left:auto;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;color:var(--cyan);font-weight:600}
+#stick{position:fixed;left:0;bottom:0;width:50%;height:55%}
+.knob{position:fixed;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;border:2px solid rgba(232,236,245,.35);background:rgba(232,236,245,.06);display:none;pointer-events:none}
+.knob i{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(232,236,245,.55)}
+.hint{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);font-size:13px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 14px;white-space:nowrap;pointer-events:none;transition:opacity .6s}
+.call,.panel{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(max(18px,env(safe-area-inset-bottom)) + 44px);display:none}
+.call{border:0;border-radius:16px;padding:14px 18px;background:var(--amber);color:#1b1305;font-weight:700;font-size:16px;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:12px;min-width:150px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.panel h3{margin:0 0 8px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.panel button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:6px 0 0;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#1b2238;color:var(--text);font-size:16px;font-weight:600}
+.panel button.here{border-color:var(--cyan);color:var(--cyan)}
+.panel button.go{background:var(--amber);color:#1b1305;border-color:var(--amber)}
+.panel button b{width:10px;height:10px;border-radius:50%;background:#3a4463}
+.panel button.here b{background:var(--cyan)}
+.start{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(circle at 50% 40%,#18203a,#0b0e19 70%);text-align:center;padding:24px}
+.start h1{margin:0;font-size:clamp(26px,7vw,44px);letter-spacing:.06em}
+.start p{margin:0;color:var(--muted);max-width:30em;line-height:1.5}
+.start button{margin-top:8px;border:0;border-radius:999px;padding:14px 28px;background:var(--text);color:#0b0e19;font-weight:700;font-size:17px}
+.start button:disabled{opacity:.5}
+.fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .45s}
+</style></head><body>
+<canvas id="view"></canvas>
+<div id="stick"></div><div class="knob" id="knob"><i></i></div>
+<div class="hud"><a class="back" href="./">← Echo Vision</a><span class="where" id="where">Deck 5</span></div>
+<div class="hint" id="hint">Left thumb: walk · right thumb: look</div>
+<button class="call" id="call">Call lift</button>
+<div class="panel" id="panel"><h3>Turbolift</h3><div id="floors"></div></div>
+<div class="fade" id="fade"></div>
+<div class="start" id="start"><h1>Walk the ship</h1><p>Judy walks behind you. Doors open as you reach them. Step into a lift and choose a deck.</p><button id="go" disabled>Loading the ship…</button></div>
+<script type="module" src="ship.mjs?v=1"></script>
+</body></html>
