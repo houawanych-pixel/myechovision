@@ -53,14 +53,14 @@ const DECK_LABEL = { 31: 'Deck 6', 36: 'Deck 5', 42: 'Deck 4' };
 const canvas = $('view');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
-renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.95;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.2;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0b0e19);
-scene.fog = new THREE.Fog(0x1a1d26, 18, 55);
+scene.fog = new THREE.Fog(0xd9dbe0, 30, 90);
 const camera = new THREE.PerspectiveCamera(70, 1, 0.05, 90);
 camera.rotation.order = 'YXZ';
-scene.add(new THREE.HemisphereLight(0xfff3e4, 0x5d574d, 1.55));
-const lamp = new THREE.PointLight(0xfff1dc, 18, 14, 1.6); scene.add(lamp);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x9a9ca3, 2.6));
+const lamp = new THREE.PointLight(0xffffff, 22, 16, 1.6); scene.add(lamp);
 const resize = () => { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix() };
 addEventListener('resize', resize); resize();
 
@@ -96,7 +96,10 @@ gltf.scene.traverse(o => {
   if (m && /star/i.test(m.name || '')) o.material = starMat;
   // Blender's procedural looks, redone simply: glass you can see through, the Voyager-style carpet, the holodeck grid
   if (m && /glass|frost/i.test(m.name || '')) { m.transparent = true; m.opacity = /frost/i.test(m.name) ? 0.55 : 0.18; m.depthWrite = false; m.roughness = 0.05 }
-  if (m && /carpet/i.test(m.name || '')) { m.color.set(/grey/i.test(m.name) ? 0x55535c : /mauve/i.test(m.name) ? 0x5e4a58 : /tan/i.test(m.name) ? 0x7d6a55 : 0x3d3946); m.roughness = 1; m.metalness = 0 }
+  if (m && /carpet/i.test(m.name || '')) { m.color.set(0x8d9097); m.roughness = 0.9; m.metalness = 0 }
+  // the ship's look on the walk: bright white walls and ceilings with black trim (the beige Blender colours made it dark)
+  if (SHIP && m && /beige|field|ceil|wall/i.test(m.name || '') && !/glass|frost/i.test(m.name)) { m.color.set(/beige2|field/i.test(m.name) ? 0xd9dbe0 : 0xf2f3f5); if (m.map) m.color.set(0xffffff) }
+  if (SHIP && m && /floor/i.test(m.name || '')) m.color.set(m.map ? 0xffffff : 0xb9bcc3);
   if (m && /holo/i.test(m.name || '')) o.material = holoMat;
   o.frustumCulled = true;
 });
@@ -177,8 +180,9 @@ if (P.normal?.video) clips.normal = videoClip(P.normal.url);
 if (P.walk?.video) clips.walk = videoClip(P.walk.url);
 for (const c of Object.values(clips)) c.v.addEventListener('loadedmetadata', () => fitBillboard(c.v.videoWidth, c.v.videoHeight), { once: true });
 const judyMat = new THREE.ShaderMaterial({ uniforms: { map: { value: still }, spill: { value: P.spill ?? 0.8 }, light: { value: 1.0 }, key: { value: P.chroma === 'blue' ? 2 : P.chroma === 'green' ? 1 : 0 }, fadeBottom: { value: 0.3 } }, vertexShader: KEY_VS, fragmentShader: KEY_FS, transparent: true, depthWrite: false });
-// Green-screen clips are framed head to mid-thigh: about 1.2 m of her. A plain picture is shown a little larger.
-const JH = P.cut ? 1.18 : 1.3, JW = JH * 400 / 736;
+// She is shown big, the way she fills the screen in chat: close to you, her head a little above your eye line,
+// and the bottom of her clip (where it stops at the thighs) below the edge of the screen and faded out.
+const JH = 1.75, JW = JH * 400 / 736, TOP = EYE + 0.32;
 const judyMesh = new THREE.Mesh(new THREE.PlaneGeometry(JW, JH), judyMat);
 judyMesh.renderOrder = 10; scene.add(judyMesh);
 function fitBillboard(w, h) { if (w && h) judyMesh.scale.x = (w / h) / (400 / 736) }
@@ -377,7 +381,7 @@ function frame(now) {
     modelAnim(judy.moving ? 'walk' : 'idle'); mixer?.update(dt);
   } else {
     judyMesh.visible = judy.deck === player.deck;
-    judyMesh.position.copy(V(judy.p[0], judy.p[1], jf + 1.8 - JH / 2));
+    judyMesh.position.copy(V(judy.p[0], judy.p[1], jf + TOP - JH / 2));
     judyMesh.rotation.set(0, Math.atan2(camera.position.x - judyMesh.position.x, camera.position.z - judyMesh.position.z), 0);
     const away = judy.moving && ((judy.p[0] - player.p[0]) * judy.vel[0] + (judy.p[1] - player.p[1]) * judy.vel[1]) > 0.3;
     showClip(away ? 'walk' : 'normal');
@@ -397,7 +401,7 @@ player.p = [...DEFAULT_START.p]; player.yaw = DEFAULT_START.yaw;
 if (!SHIP) { player.p = CFG.start.p; player.deck = 0; player.floor = CFG.start.floor; player.yaw = 0 }
 if (params.get('at')) { const [x, y, z] = params.get('at').split(',').map(Number); player.p = [x, y]; if (z) { player.deck = z; player.floor = z } }
 if (params.get('yaw')) player.yaw = Number(params.get('yaw'));
-judy = createFollower([player.p[0] + Math.sin(player.yaw) * 1.45, player.p[1] - Math.cos(player.yaw) * 1.45], player.deck);
+judy = createFollower([player.p[0] + Math.sin(player.yaw) * 1.2, player.p[1] - Math.cos(player.yaw) * 1.2], player.deck, { gap: 1.2, near: 0.85 });
 if (!walkable(plan, judy.p, judy.deck)) placeFollower(judy, player.p, player.deck);
 judy.floor = player.floor;
 judy.trail = [[...player.p]];

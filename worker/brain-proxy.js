@@ -4,7 +4,7 @@
 // Set these in the Worker's settings (Variables and Secrets):
 //   UPSTREAM  e.g. https://api.groq.com/openai/v1   (any OpenAI-compatible service)
 //   API_KEY   the service key, stored as a Secret
-//   ALLOW     the site allowed to call this, e.g. https://houawanych-pixel.github.io
+//   ALLOW     the site allowed to call this: https://myechovision.com
 // Then in My Echo Vision choose "My own server or computer", enter this Worker's address,
 // leave the key empty, and tap "Check and list models".
 export default {
