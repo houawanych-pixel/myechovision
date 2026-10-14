@@ -1,11 +1,11 @@
 // Optional Cloudflare Worker that keeps the model key on a server instead of in a browser.
-// Use it before letting other people use Echo Vision: they then need no key of their own.
+// Use it before letting other people use My Echo Vision: they then need no key of their own.
 //
 // Set these in the Worker's settings (Variables and Secrets):
 //   UPSTREAM  e.g. https://api.groq.com/openai/v1   (any OpenAI-compatible service)
 //   API_KEY   the service key, stored as a Secret
 //   ALLOW     the site allowed to call this, e.g. https://houawanych-pixel.github.io
-// Then in Echo Vision choose "My own server or computer", enter this Worker's address,
+// Then in My Echo Vision choose "My own server or computer", enter this Worker's address,
 // leave the key empty, and tap "Check and list models".
 export default {
   async fetch(request, env) {

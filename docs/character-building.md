@@ -1,10 +1,10 @@
 # Building a character
 
-How to make a character's picture, expression clips, action clips and voice so they fit together in Echo Vision.
+How to make a character's picture, expression clips, action clips and voice so they fit together in My Echo Vision.
 The same steps are in the app: Cast -> a character -> Expressions, actions and green screen -> How to make these.
 Each slot there has a Prompt button that copies the prompt for that clip.
 
-You make the pictures and clips in any image and video generator. Echo Vision only needs the files.
+You make the pictures and clips in any image and video generator. My Echo Vision only needs the files.
 
 ## The rules that make it look real
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copies the Pocket TTS browser model and ONNX Runtime Web into this repo so
-# Echo Vision's voice cloning does not depend on anyone else's hosting.
+# My Echo Vision's voice cloning does not depend on anyone else's hosting.
 # Run by .github/workflows/fetch-voice-model.yml, or by hand from the repo root.
 set -euo pipefail
 SRC="https://huggingface.co/spaces/KevinAHM/pocket-tts-web/resolve/main/onnx"
@@ -13,7 +13,7 @@ for L in $LANGS; do
   d="app/models/onnx/$L"; mkdir -p "$d"
   get "$SRC/$L/bundle.json" "$d/bundle.json"
   extra=$(python3 -c "import json,sys;m=json.load(open(sys.argv[1]));print(' '.join(v for v in (m.get('tokenizer_file'),m.get('bos_before_voice_file')) if v))" "$d/bundle.json")
-  # voices.bin (the model's bundled sample voices, ~50 MB) is left out on purpose: Echo Vision only uses cloned voices.
+  # voices.bin (the model's bundled sample voices, ~50 MB) is left out on purpose: My Echo Vision only uses cloned voices.
   for f in mimi_encoder_int8.onnx text_conditioner_int8.onnx flow_lm_main_int8.onnx flow_lm_flow_int8.onnx mimi_decoder_int8.onnx $extra; do
     echo "fetching $L/$f"; get "$SRC/$L/$f" "$d/$f"
   done

@@ -2,7 +2,7 @@
 # Turns one talking-character video clip into everything a character needs:
 #   <name>-voice.wav  24 kHz mono, first 10 s  -> the sample the voice cloner learns from
 #   <name>-voice.mp3  the same audio, for listening and sharing
-#   <name>-loop.mp4   the video with sound removed -> idle loop (15 s max in Echo Vision)
+#   <name>-loop.mp4   the video with sound removed -> idle loop (15 s max in My Echo Vision)
 #   <name>.webp       a still frame -> portrait
 # Usage: tools/clip-to-voice.sh clip.mp4 nova [output-folder]
 set -euo pipefail

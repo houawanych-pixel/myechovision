@@ -1,4 +1,4 @@
-// On-device voice cloning for Echo Vision. Wraps the vendored Pocket TTS worker
+// On-device voice cloning for My Echo Vision. Wraps the vendored Pocket TTS worker
 // (see vendor/pocket-voice/NOTICE.md). No audio or text leaves the device.
 const RATE=24000,HERE=import.meta.url;
 // Prefer our own copies of the model and runtime; fall back to the public ones if they are not there.

@@ -38,9 +38,9 @@ moments are louder than about -45 dB (music or noise under the voice) or there i
 
 ## 3. Use the voice
 
-- **In Echo Vision, by hand:** Cast -> add character (portrait + loop); Voices -> Clone a voice
+- **In My Echo Vision, by hand:** Cast -> add character (portrait + loop); Voices -> Clone a voice
   -> upload the WAV.
-- **As a built-in Echo Vision character:** put the three files in `app/assets/` and add an
+- **As a built-in My Echo Vision character:** put the three files in `app/assets/` and add an
   entry to the `builtIn` list near the top of `app/app.js`. These files become public.
 - **For another project (game dialogue etc.):** in Voices, pick the clone, type each line in
   the Voice Tool, tap Speak, then Save WAV. The WAV is 24 kHz mono.
