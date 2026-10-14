@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from './vendor/three/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from './vendor/three/libs/meshopt_decoder.module.js';
-import { buildPlan, slide, walkable, floorAt, roomAt, updateDoors, liftAt, liftNear, liftDoor, createFollower, recordTrail, stepFollower, placeFollower, EYE } from './ship-core.mjs?v=1';
+import { buildPlan, slide, walkable, floorAt, roomAt, updateDoors, liftAt, liftNear, liftDoor, createFollower, recordTrail, stepFollower, placeFollower, EYE } from './ship-core.mjs?v=2';
 
 const $ = id => document.getElementById(id);
 const V = (x, y, z) => new THREE.Vector3(x, z, -y);
@@ -164,6 +164,34 @@ function hum(sec) {
   o.connect(f).connect(g).connect(actx.destination); o.start(t); o.stop(t + sec + 0.05);
 }
 
+// footsteps: a soft heel-and-sole thump, yours in the middle, hers placed where she is, half a step out of time with yours
+let stepBuf = null;
+function stepSound(gain, pan, rate) {
+  if (!actx) return;
+  if (!stepBuf) {
+    const n = Math.floor(actx.sampleRate * 0.16); stepBuf = actx.createBuffer(1, n, actx.sampleRate); const d = stepBuf.getChannelData(0);
+    for (let i = 0; i < n; i++) { const t = i / actx.sampleRate; d[i] = (Math.random() * 2 - 1) * Math.exp(-t * 38) * 0.8 + Math.sin(2 * Math.PI * 70 * t) * Math.exp(-t * 30) * 0.9 + (t > 0.05 ? (Math.random() * 2 - 1) * Math.exp(-(t - 0.05) * 60) * 0.35 : 0) }
+  }
+  const s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(), pn = actx.createStereoPanner ? actx.createStereoPanner() : null;
+  s.buffer = stepBuf; s.playbackRate.value = rate * (0.94 + Math.random() * 0.12); f.type = 'lowpass'; f.frequency.value = 900 + Math.random() * 300; g.gain.value = gain;
+  let n = s.connect(f).connect(g); if (pn) { pn.pan.value = Math.max(-1, Math.min(1, pan)); n = n.connect(pn) } n.connect(actx.destination); s.start();
+}
+const steps = { me: 0, her: 0.45 };
+function footsteps(dt) {
+  const mine = Math.hypot(...player.vel) * dt; steps.me += mine;
+  if (steps.me > 0.72) { steps.me = 0; stepSound(0.22, 0, 1.0) }
+  if (judy.moving && judy.deck === player.deck) {
+    steps.her += Math.hypot(...judy.vel) * dt;
+    if (steps.her > 0.66) {
+      steps.her = 0;
+      // left or right of you, from where she is relative to the way you face
+      const dx = judy.p[0] - player.p[0], dy = judy.p[1] - player.p[1], rx = Math.cos(player.yaw), ry = Math.sin(player.yaw);
+      const dist = Math.hypot(dx, dy) || 1;
+      stepSound(0.28 / Math.max(1, dist * 0.6), (dx * rx + dy * ry) / dist * 0.8, 1.22);
+    }
+  }
+}
+
 // ---------- lifts ----------
 const call = $('call'), panel = $('panel'), floors = $('floors'), fade = $('fade');
 let panelLift = null;
@@ -229,7 +257,7 @@ function frame(now) {
     const fl = floorAt(plan, player.p, player.deck); player.floor += (fl - player.floor) * Math.min(1, dt * 4);
     recordTrail(judy, player.p, player.deck);
   } else player.vel = [0, 0];
-  if (judy) stepFollower(judy, plan, player, dt);
+  if (judy) { stepFollower(judy, plan, player, dt); if (started && !riding) footsteps(dt) }
   // doors: you and Judy both open them
   const before = plan.doors.map(d => d.open > 0.02);
   updateDoors(plan, [player, judy].filter(Boolean), dt);
@@ -260,7 +288,7 @@ const params = new URLSearchParams(location.search), NORENDER = params.has('nore
 player.p = [...DEFAULT_START.p]; player.yaw = DEFAULT_START.yaw;
 if (params.get('at')) { const [x, y, z] = params.get('at').split(',').map(Number); player.p = [x, y]; if (z) { player.deck = z; player.floor = z } }
 if (params.get('yaw')) player.yaw = Number(params.get('yaw'));
-judy = createFollower([player.p[0] - Math.sin(player.yaw) * -3.2, player.p[1] + Math.cos(player.yaw) * -3.2], player.deck);
+judy = createFollower([player.p[0] + Math.sin(player.yaw) * 1.45, player.p[1] - Math.cos(player.yaw) * 1.45], player.deck);
 if (!walkable(plan, judy.p, judy.deck)) placeFollower(judy, player.p, player.deck);
 judy.trail = [[...player.p]];
 placeDoors(); placeCamera();

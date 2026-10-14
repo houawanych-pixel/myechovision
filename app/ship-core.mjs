@@ -153,9 +153,9 @@ export function liftNear(plan, p, deck, reach = 3.0) {
 
 // ---------- the companion ----------
 // She walks the player's own path (a breadcrumb trail), so she goes through doors and around corners the same way.
-// She keeps about `gap` metres of path behind the player. If the player walks at her, she steps aside.
-export function createFollower(start, deck, { gap = 3.2, speed = 2.6 } = {}) {
-  return { p: [...start], deck, trail: [[...start]], gap, speed, dodge: null, moving: false, vel: [0, 0] };
+// She keeps about `gap` metres of path behind the player, close enough that you see her from the waist up.
+export function createFollower(start, deck, { gap = 1.45, near = 1.0, speed = 2.6 } = {}) {
+  return { p: [...start], deck, trail: [[...start]], gap, near, speed, side: 0, moving: false, vel: [0, 0] };
 }
 export function recordTrail(f, playerP, playerDeck) {
   if (playerDeck !== f.deck) return;
@@ -170,24 +170,33 @@ export function pathLength(f, playerP) {
   return L + Math.hypot(playerP[0] - prev[0], playerP[1] - prev[1]);
 }
 // One step of her behaviour. player: {p, deck, vel:[vx,vy]}. Returns nothing; updates f.
+// She stays close (upper-body distance). If you push toward her she circles around you at the same distance,
+// so she never leaves the picture and never gets walked through; otherwise she walks your path behind you.
 export function stepFollower(f, plan, player, dt) {
   f.moving = false; f.vel = [0, 0];
   if (player.deck !== f.deck) return;
   const toMe = [f.p[0] - player.p[0], f.p[1] - player.p[1]], dist = Math.hypot(...toMe) || 1e-6;
   const pv = Math.hypot(...player.vel);
-  // the player is coming straight at her: pick a side that has floor and step out of the way
-  if (!f.dodge && dist < 1.9 && pv > 0.4 && (player.vel[0] * toMe[0] + player.vel[1] * toMe[1]) / (pv * dist) > 0.55) {
-    const side = [-player.vel[1] / pv, player.vel[0] / pv];
-    // sideways first (the side she is already leaning to), backing away only when the hall is too narrow
-    const lean = Math.sign(toMe[0] * side[0] + toMe[1] * side[1]) || 1;
-    const opts = [lean, -lean].flatMap(s => [1.6, 1.1].map(k => [f.p[0] + side[0] * s * k, f.p[1] + side[1] * s * k]))
-      .concat([[f.p[0] + player.vel[0] / pv * 2.5, f.p[1] + player.vel[1] / pv * 2.5]])
-      .filter(q => walkable(plan, q, f.deck, RADIUS) && walkable(plan, [(q[0] + f.p[0]) / 2, (q[1] + f.p[1]) / 2], f.deck, RADIUS));
-    if (opts.length) f.dodge = { to: opts[0], t: 1.4 };
-  }
-  let target, ahead;
-  if (f.dodge) { target = f.dodge.to; ahead = Math.hypot(target[0] - f.p[0], target[1] - f.p[1]); f.dodge.t -= dt; if (f.dodge.t <= 0) { f.dodge = null; f.trail = [[...player.p]] } }
-  else {
+  const coming = pv > 0.3 && (player.vel[0] * toMe[0] + player.vel[1] * toMe[1]) / (pv * dist) > 0.25 && dist < f.gap + 0.8;
+  let target = null, sp;
+  if (coming || dist < f.near) {
+    // orbit: turn her bearing around the player away from the way the player is heading, keeping the radius
+    const a = Math.atan2(toMe[1], toMe[0]);
+    if (!f.side || !coming) f.side = Math.sign(player.vel[0] * toMe[1] - player.vel[1] * toMe[0]) || f.side || 1;
+    const R = Math.max(f.gap, f.near + 0.2);
+    const at = ang => [player.p[0] + Math.cos(ang) * R, player.p[1] + Math.sin(ang) * R];
+    const ok = q => walkable(plan, q, f.deck, 0.22);
+    for (const s of [f.side, -f.side]) {
+      const q = at(a + s * 0.7);
+      if (ok(q)) { target = q; f.side = s; break }
+    }
+    // a hall too narrow to pass: back away along her side of the hall instead
+    if (!target) { const q = [f.p[0] + toMe[0] / dist * 0.8, f.p[1] + toMe[1] / dist * 0.8]; if (ok(q)) target = q }
+    if (!target) return;
+    sp = Math.max(f.speed * 1.4, pv * 1.6);
+    f.trail = [[...player.p]];
+  } else {
+    f.side = 0;
     // the trail is a queue of the player's footsteps she has not reached yet
     while (f.trail.length > 1 && Math.hypot(f.trail[0][0] - f.p[0], f.trail[0][1] - f.p[1]) < 0.35) f.trail.shift();
     // if the player doubled back past her, skip the loop: jump to the newest footstep right beside her
@@ -196,16 +205,16 @@ export function stepFollower(f, plan, player, dt) {
     // she stops once the path left to the player is no longer than the gap
     if (left <= f.gap) return;
     target = f.trail[0] || player.p;
-    ahead = left - f.gap;
+    // faster when she has fallen behind, slower as she arrives
+    sp = Math.min(f.speed * (dist > f.gap + 3 ? 1.5 : 1), 0.5 + (left - f.gap) * 3);
   }
   const dx = target[0] - f.p[0], dy = target[1] - f.p[1], d = Math.hypot(dx, dy);
-  if (d < 0.02) { if (!f.dodge && f.trail.length > 1) f.trail.shift(); return }
-  // faster when she has fallen behind, slower as she arrives
-  const sp = f.dodge ? f.speed * 1.2 : Math.min(f.speed * (dist > f.gap + 3 ? 1.4 : 1), 0.5 + ahead * 2.5);
-  const np = slide(plan, f.p, dx / d * sp * dt, dy / d * sp * dt, f.deck, 0.22);
+  if (d < 0.02) { if (f.trail.length > 1) f.trail.shift(); return }
+  const step = Math.min(sp * dt, d);
+  const np = slide(plan, f.p, dx / d * step, dy / d * step, f.deck, 0.22);
   f.vel = [(np[0] - f.p[0]) / dt, (np[1] - f.p[1]) / dt];
   f.moving = Math.hypot(...f.vel) > 0.25;
   f.p = np;
 }
 // After a lift ride or a jump she stands just behind the player, with a fresh trail.
-export function placeFollower(f, p, deck) { f.p = [...p]; f.deck = deck; f.trail = [[...p]]; f.dodge = null }
+export function placeFollower(f, p, deck) { f.p = [...p]; f.deck = deck; f.trail = [[...p]]; f.side = 0 }

@@ -69,19 +69,20 @@ test('the companion follows the path behind you and keeps her distance', () => {
   player.vel = [0, 0];
   for (let t = 0; t < 4; t += 1 / 30) stepFollower(f, plan, player, 1 / 30);
   const d = Math.hypot(f.p[0] - player.p[0], f.p[1] - player.p[1]);
-  assert.ok(d > 2 && d < 4.5, 'stands a few metres away, got ' + d.toFixed(2));
+  assert.ok(d > 1.1 && d < 2.2, 'stands close, upper-body distance, got ' + d.toFixed(2));
   assert.ok(f.p[1] > player.p[1], 'behind you');
   assert.ok(walkable(plan, f.p, 36, 0.2), 'never inside a wall');
 });
 
-test('walking at her makes her step out of the way', () => {
+test('walking at her makes her circle around you at the same distance', () => {
   const plan = fresh();
   const f = createFollower([0, 60], 36), player = { p: [0, 64], deck: 36, vel: [0, -2] };
-  placeFollower(f, [0, 62.5], 36);
+  placeFollower(f, [0, 62.6], 36);
   let minD = Infinity;
   for (let t = 0; t < 2; t += 1 / 30) {
     player.p = slide(plan, player.p, 0, -2 / 30, 36); recordTrail(f, player.p, 36); stepFollower(f, plan, player, 1 / 30);
     minD = Math.min(minD, Math.hypot(f.p[0] - player.p[0], f.p[1] - player.p[1]));
   }
-  assert.ok(minD > 0.45, 'kept clear of you, closest ' + minD.toFixed(2));
+  assert.ok(minD > 0.85, 'kept clear of you, closest ' + minD.toFixed(2));
+  assert.ok(f.p[1] > player.p[1] - 0.5, 'she went around you rather than being pushed ahead');
 });
