@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from './vendor/three/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from './vendor/three/libs/meshopt_decoder.module.js';
-import { buildPlan, slide, walkable, floorAt, roomAt, updateDoors, liftAt, liftNear, liftDoor, createFollower, recordTrail, stepFollower, placeFollower, EYE } from './ship-core.mjs?v=2';
+import { buildPlan, slide, walkable, floorAt, roomAt, updateDoors, liftAt, liftNear, liftDoor, createFollower, recordTrail, stepFollower, placeFollower, EYE } from './ship-core.mjs?v=3';
 
 const $ = id => document.getElementById(id);
 const V = (x, y, z) => new THREE.Vector3(x, z, -y);
@@ -30,7 +30,7 @@ addEventListener('resize', resize); resize();
 
 // ---------- state ----------
 let plan = null;
-const player = { p: [0, 79], deck: 36, yaw: 0, pitch: -0.04, vel: [0, 0], floor: 36 };
+const player = { p: [0, 79], deck: 36, yaw: 0, pitch: 0, vel: [0, 0], floor: 36 };
 let judy = null, riding = false, started = false;
 const DEFAULT_START = { p: [0, 79], yaw: Math.PI };   // deck 5 crew corridor beside the middle lift, facing the stern
 
@@ -123,25 +123,32 @@ const input = { mx: 0, my: 0, keys: new Set() };
 let stickId = null, stickO = null, lookId = null, lookLast = null;
 const knob = $('knob'), knobDot = knob.firstElementChild;
 canvas.addEventListener('contextmenu', e => e.preventDefault());
+// A fixed analog stick at the bottom left: up walks forward, down walks back, left and right turn.
+// Touch anywhere on the left half to grab it. Dragging on the right half looks around, with only a little
+// downward tilt so Judy (framed from the waist up) always looks whole.
+const PITCH_DOWN = -0.2, PITCH_UP = 0.55;
+const stickCentre = () => { const r = knob.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2] };
 addEventListener('pointerdown', e => {
   if (!started || e.target.closest('button,a,.panel')) return;
-  const left = e.clientX < innerWidth / 2 && e.pointerType !== 'mouse';
-  if (left && stickId === null) { stickId = e.pointerId; stickO = [e.clientX, e.clientY]; knob.style.display = 'block'; knob.style.left = e.clientX + 'px'; knob.style.top = e.clientY + 'px'; knobDot.style.transform = '' }
-  else if (lookId === null) { lookId = e.pointerId; lookLast = [e.clientX, e.clientY] }
+  const left = e.clientX < innerWidth / 2;
+  if (left && stickId === null) { stickId = e.pointerId; stickO = stickCentre(); knob.classList.add('on'); moveStick(e) }
+  else if (!left && lookId === null) { lookId = e.pointerId; lookLast = [e.clientX, e.clientY] }
 });
+function moveStick(e) {
+  let dx = e.clientX - stickO[0], dy = e.clientY - stickO[1]; const r = Math.hypot(dx, dy), R = 50;
+  if (r > R) { dx *= R / r; dy *= R / r }
+  input.mx = dx / R; input.my = -dy / R; knobDot.style.transform = `translate(${dx}px,${dy}px)`;
+}
 addEventListener('pointermove', e => {
-  if (e.pointerId === stickId) {
-    let dx = e.clientX - stickO[0], dy = e.clientY - stickO[1]; const r = Math.hypot(dx, dy), R = 55;
-    if (r > R) { dx *= R / r; dy *= R / r }
-    input.mx = dx / R; input.my = -dy / R; knobDot.style.transform = `translate(${dx}px,${dy}px)`;
-  } else if (e.pointerId === lookId) {
+  if (e.pointerId === stickId) moveStick(e);
+  else if (e.pointerId === lookId) {
     const k = e.pointerType === 'mouse' ? 0.004 : 0.0055;
-    player.yaw -= (e.clientX - lookLast[0]) * k; player.pitch = Math.max(-1.1, Math.min(1.1, player.pitch - (e.clientY - lookLast[1]) * k));
+    player.yaw -= (e.clientX - lookLast[0]) * k; player.pitch = Math.max(PITCH_DOWN, Math.min(PITCH_UP, player.pitch - (e.clientY - lookLast[1]) * k));
     lookLast = [e.clientX, e.clientY];
   }
 });
 const endPointer = e => {
-  if (e.pointerId === stickId) { stickId = null; input.mx = input.my = 0; knob.style.display = 'none' }
+  if (e.pointerId === stickId) { stickId = null; input.mx = input.my = 0; knob.classList.remove('on'); knobDot.style.transform = '' }
   if (e.pointerId === lookId) lookId = null;
 };
 addEventListener('pointerup', endPointer); addEventListener('pointercancel', endPointer);
@@ -164,32 +171,28 @@ function hum(sec) {
   o.connect(f).connect(g).connect(actx.destination); o.start(t); o.stop(t + sec + 0.05);
 }
 
-// footsteps: a soft heel-and-sole thump, yours in the middle, hers placed where she is, half a step out of time with yours
-let stepBuf = null;
-function stepSound(gain, pan, rate) {
-  if (!actx) return;
-  if (!stepBuf) {
-    const n = Math.floor(actx.sampleRate * 0.16); stepBuf = actx.createBuffer(1, n, actx.sampleRate); const d = stepBuf.getChannelData(0);
-    for (let i = 0; i < n; i++) { const t = i / actx.sampleRate; d[i] = (Math.random() * 2 - 1) * Math.exp(-t * 38) * 0.8 + Math.sin(2 * Math.PI * 70 * t) * Math.exp(-t * 30) * 0.9 + (t > 0.05 ? (Math.random() * 2 - 1) * Math.exp(-(t - 0.05) * 60) * 0.35 : 0) }
+// footsteps: the recorded walking sound from the hallway walk, looped. One copy follows your walking; a second copy,
+// half a step out of time and a touch higher, follows hers and is placed left or right of you where she is.
+let stepsBuf = null; const walkers = {};
+async function loadSteps() {
+  try { stepsBuf = await actx.decodeAudioData(await (await fetch('assets/ship/steps.m4a')).arrayBuffer()) } catch { return }
+  for (const [id, rate, at] of [['me', 1.0, 0], ['her', 1.07, 0.31]]) {
+    const src = actx.createBufferSource(), g = actx.createGain(), pan = actx.createStereoPanner ? actx.createStereoPanner() : null;
+    src.buffer = stepsBuf; src.loop = true; src.playbackRate.value = rate; g.gain.value = 0;
+    let n = src.connect(g); if (pan) n = n.connect(pan); n.connect(actx.destination); src.start(0, at * stepsBuf.duration);
+    walkers[id] = { src, g, pan };
   }
-  const s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(), pn = actx.createStereoPanner ? actx.createStereoPanner() : null;
-  s.buffer = stepBuf; s.playbackRate.value = rate * (0.94 + Math.random() * 0.12); f.type = 'lowpass'; f.frequency.value = 900 + Math.random() * 300; g.gain.value = gain;
-  let n = s.connect(f).connect(g); if (pn) { pn.pan.value = Math.max(-1, Math.min(1, pan)); n = n.connect(pn) } n.connect(actx.destination); s.start();
 }
-const steps = { me: 0, her: 0.45 };
-function footsteps(dt) {
-  const mine = Math.hypot(...player.vel) * dt; steps.me += mine;
-  if (steps.me > 0.72) { steps.me = 0; stepSound(0.22, 0, 1.0) }
-  if (judy.moving && judy.deck === player.deck) {
-    steps.her += Math.hypot(...judy.vel) * dt;
-    if (steps.her > 0.66) {
-      steps.her = 0;
-      // left or right of you, from where she is relative to the way you face
-      const dx = judy.p[0] - player.p[0], dy = judy.p[1] - player.p[1], rx = Math.cos(player.yaw), ry = Math.sin(player.yaw);
-      const dist = Math.hypot(dx, dy) || 1;
-      stepSound(0.28 / Math.max(1, dist * 0.6), (dx * rx + dy * ry) / dist * 0.8, 1.22);
-    }
-  }
+function footsteps() {
+  if (!walkers.me) return;
+  const t = actx.currentTime, mine = Math.hypot(...player.vel);
+  walkers.me.g.gain.setTargetAtTime(mine > 0.3 ? 0.55 * Math.min(1, mine / 2.2) : 0, t, mine > 0.3 ? 0.06 : 0.12);
+  walkers.me.src.playbackRate.setTargetAtTime(0.85 + 0.15 * Math.min(1, mine / 2.2), t, 0.2);
+  const herSp = judy.moving && judy.deck === player.deck ? Math.hypot(...judy.vel) : 0;
+  const dx = judy.p[0] - player.p[0], dy = judy.p[1] - player.p[1], dist = Math.hypot(dx, dy) || 1;
+  const side = (dx * Math.cos(player.yaw) + dy * Math.sin(player.yaw)) / dist;
+  walkers.her.g.gain.setTargetAtTime(herSp > 0.3 ? 0.45 / Math.max(1, dist * 0.5) : 0, t, herSp > 0.3 ? 0.06 : 0.12);
+  if (walkers.her.pan) walkers.her.pan.pan.setTargetAtTime(Math.max(-0.85, Math.min(0.85, side * 0.85)), t, 0.1);
 }
 
 // ---------- lifts ----------
@@ -247,17 +250,20 @@ function frame(now) {
   if (started && !riding) {
     let mx = input.mx, my = input.my; const k = input.keys;
     if (k.has('w') || k.has('arrowup')) my = 1; if (k.has('s') || k.has('arrowdown')) my = -1;
-    if (k.has('a')) mx = -1; if (k.has('d')) mx = 1;
-    if (k.has('arrowleft')) player.yaw += 1.8 * dt; if (k.has('arrowright')) player.yaw -= 1.8 * dt;
+    if (k.has('a') || k.has('arrowleft')) mx = -1; if (k.has('d') || k.has('arrowright')) mx = 1;
+    // a small dead zone, then turn speed grows with how far the stick is pushed sideways
+    const turn = Math.abs(mx) < 0.12 ? 0 : Math.sign(mx) * (Math.abs(mx) - 0.12) / 0.88;
+    player.yaw -= turn * Math.abs(turn) * 1.6 * dt; mx = 0;
+    if (Math.abs(my) < 0.12) my = 0;
     const fx = -Math.sin(player.yaw), fy = Math.cos(player.yaw), rx = Math.cos(player.yaw), ry = Math.sin(player.yaw);
-    const sp = 2.2, vx = (fx * my + rx * mx) * sp, vy = (fy * my + ry * mx) * sp;
+    const sp = my < 0 ? 1.4 : 2.2, vx = (fx * my + rx * mx) * sp, vy = (fy * my + ry * mx) * sp;
     const np = slide(plan, player.p, vx * dt, vy * dt, player.deck);
     player.vel = [(np[0] - player.p[0]) / dt, (np[1] - player.p[1]) / dt]; player.p = np;
     if (Math.hypot(vx, vy) > 0.1 && !hintTimer) hintTimer = setTimeout(() => $('hint').style.opacity = '0', 2500);
     const fl = floorAt(plan, player.p, player.deck); player.floor += (fl - player.floor) * Math.min(1, dt * 4);
     recordTrail(judy, player.p, player.deck);
   } else player.vel = [0, 0];
-  if (judy) { stepFollower(judy, plan, player, dt); if (started && !riding) footsteps(dt) }
+  if (judy) { stepFollower(judy, plan, player, dt); if (started) footsteps() }
   // doors: you and Judy both open them
   const before = plan.doors.map(d => d.open > 0.02);
   updateDoors(plan, [player, judy].filter(Boolean), dt);
@@ -295,7 +301,7 @@ placeDoors(); placeCamera();
 requestAnimationFrame(frame);
 const go = $('go'); go.disabled = false; go.textContent = 'Start walking';
 go.onclick = () => {
-  try { actx = new (window.AudioContext || window.webkitAudioContext)() } catch { }
+  try { actx = new (window.AudioContext || window.webkitAudioContext)(); loadSteps() } catch { }
   for (const c of Object.values(clips)) c.v.play().then(() => { judyClip = null }).catch(() => { });
   $('start').style.display = 'none'; started = true;
 };

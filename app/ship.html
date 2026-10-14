@@ -10,10 +10,16 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 .back{color:var(--text);text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px}
 .where{margin-left:auto;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;color:var(--cyan);font-weight:600}
 #stick{position:fixed;left:0;bottom:0;width:50%;height:55%}
-.knob{position:fixed;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;border:2px solid rgba(232,236,245,.35);background:rgba(232,236,245,.06);display:none;pointer-events:none}
-.knob i{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(232,236,245,.55)}
-.hint{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);font-size:13px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 14px;white-space:nowrap;pointer-events:none;transition:opacity .6s}
-.call,.panel{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(max(18px,env(safe-area-inset-bottom)) + 44px);display:none}
+.knob{position:fixed;left:calc(max(22px,env(safe-area-inset-left)) + 66px);bottom:calc(max(26px,env(safe-area-inset-bottom)) + 66px);width:132px;height:132px;margin:0 0 -66px -66px;border-radius:50%;border:2px solid rgba(232,236,245,.4);background:rgba(16,20,34,.45);pointer-events:none;box-shadow:inset 0 0 0 10px rgba(232,236,245,.04)}
+.knob::before,.knob::after{content:'';position:absolute;left:50%;top:50%;border:7px solid transparent;opacity:.55}
+.knob::before{margin:-62px 0 0 -7px;border-bottom-color:#e8ecf5}
+.knob::after{margin:48px 0 0 -7px;border-top-color:#e8ecf5}
+.knob b{position:absolute;top:50%;margin-top:-7px;border:7px solid transparent;opacity:.55}
+.knob b.l{left:2px;border-right-color:#e8ecf5}.knob b.r{right:2px;border-left-color:#e8ecf5}
+.knob i{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:rgba(232,236,245,.6);box-shadow:0 4px 14px rgba(0,0,0,.4);transition:transform .08s}
+.knob.on i{transition:none}
+.hint{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:max(26px,env(safe-area-inset-bottom));max-width:min(46vw,260px);text-align:right;font-size:13px;line-height:1.35;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 12px;pointer-events:none;transition:opacity .6s}
+.call,.panel{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(max(26px,env(safe-area-inset-bottom)) + 96px);display:none}
 .call{border:0;border-radius:16px;padding:14px 18px;background:var(--amber);color:#1b1305;font-weight:700;font-size:16px;box-shadow:0 6px 24px rgba(0,0,0,.4)}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:12px;min-width:150px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
 .panel h3{margin:0 0 8px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
@@ -30,12 +36,12 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 .fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .45s}
 </style></head><body>
 <canvas id="view"></canvas>
-<div id="stick"></div><div class="knob" id="knob"><i></i></div>
+<div id="stick"></div><div class="knob" id="knob"><i></i><b class="l"></b><b class="r"></b></div>
 <div class="hud"><a class="back" href="./">← Echo Vision</a><span class="where" id="where">Deck 5</span></div>
-<div class="hint" id="hint">Left thumb: walk · right thumb: look</div>
+<div class="hint" id="hint">Stick: walk and turn.<br>Drag on the right to look up.</div>
 <button class="call" id="call">Call lift</button>
 <div class="panel" id="panel"><h3>Turbolift</h3><div id="floors"></div></div>
 <div class="fade" id="fade"></div>
 <div class="start" id="start"><h1>Walk the ship</h1><p>Judy walks with you. Doors open as you reach them. Step into a lift and choose a deck.</p><button id="go" disabled>Loading the ship…</button></div>
-<script type="module" src="ship.mjs?v=2"></script>
+<script type="module" src="ship.mjs?v=3"></script>
 </body></html>
