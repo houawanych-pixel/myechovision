@@ -2,7 +2,7 @@
 // Use it before letting other people use My Echo Vision: they then need no key of their own.
 //
 // Set these in the Worker's settings (Variables and Secrets):
-//   UPSTREAM  e.g. https://api.groq.com/openai/v1   (any OpenAI-compatible service)
+//   UPSTREAM  https://api.x.ai/v1 for Grok, or https://api.groq.com/openai/v1 for Groq (any OpenAI-compatible service)
 //   API_KEY   the service key, stored as a Secret
 //   ALLOW     the site allowed to call this: https://myechovision.com
 // Then in My Echo Vision choose "My own server or computer", enter this Worker's address,

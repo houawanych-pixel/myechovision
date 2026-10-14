@@ -13,7 +13,7 @@ export async function reply(ctx,size,onText=()=>{}){if(busy)throw Error('Still t
 // ---- Fast brain: any OpenAI-compatible chat service (a hosted model, a small proxy, or your own computer).
 // The key lives only in this browser's storage. It is never part of the app's code or its saved studio data.
 const KEY='echo-vision-brain-key';
-export const PRESETS=[{name:'Groq',url:'https://api.groq.com/openai/v1'},{name:'OpenRouter',url:'https://openrouter.ai/api/v1'},{name:'My own server or computer',url:''}];
+export const PRESETS=[{name:'Grok (xAI)',url:'https://api.x.ai/v1'},{name:'Groq',url:'https://api.groq.com/openai/v1'},{name:'OpenRouter',url:'https://openrouter.ai/api/v1'},{name:'My own server or computer',url:''}];
 export function remoteKey(){try{return localStorage.getItem(KEY)||''}catch{return ''}}
 export function setRemoteKey(k){try{k?localStorage.setItem(KEY,k):localStorage.removeItem(KEY)}catch{}}
 const base=u=>String(u||'').trim().replace(/\/+$/,''),auth=()=>remoteKey()?{Authorization:'Bearer '+remoteKey()}:{};
@@ -21,11 +21,11 @@ async function fail(r){const status=r.status;let detail='';try{const t=await r.t
 // Services also list speech, safety and embedding models; those cannot hold a conversation.
 export const chatModel=id=>!/whisper|tts|speech|guard|embed|rerank|moderation|playai|orpheus|transcri|vision-preview|image|audio/i.test(id);
 // Best guess at a good conversational model from a list of ids: strong general models first, small fast ones last.
-export function pickModel(ids,current){if(current&&ids.includes(current))return current;for(const re of [/llama-3\.3-70b/i,/llama.*70b/i,/llama-4|maverick|scout/i,/kimi/i,/gemma.*(27|12)b|mistral/i,/llama.*(instant|8b)/i,/gpt-oss-120b/i,/gpt-oss/i,/llama|qwen|gemma/i]){const hit=ids.find(i=>re.test(i));if(hit)return hit}return ids[0]}
+export function pickModel(ids,current){if(current&&ids.includes(current))return current;for(const re of [/grok-4.*fast.*non-reasoning/i,/grok-3-mini/i,/grok-4.*fast/i,/grok/i,/llama-3\.3-70b/i,/llama.*70b/i,/llama-4|maverick|scout/i,/kimi/i,/gemma.*(27|12)b|mistral/i,/llama.*(instant|8b)/i,/gpt-oss-120b/i,/gpt-oss/i,/llama|qwen|gemma/i]){const hit=ids.find(i=>re.test(i));if(hit)return hit}return ids[0]}
 export async function remoteModels(url){let r;try{r=await fetch(base(url)+'/models',{headers:auth()})}catch{throw Error('Could not reach that address.')}if(!r.ok)throw await fail(r);const d=await r.json();return (d.data||d.models||[]).filter(m=>m.active!==false).map(m=>m.id||m.name).filter(Boolean).filter(chatModel).sort()}
 // "Thinking" models spend their word budget reasoning before they answer. Ask them to think briefly,
 // give every model room to finish, and if the answer still comes back empty, try once more with more room.
-const thinker=id=>/gpt-oss|qwen-?3|qwq|deepseek|r1|reason|think|o[134]-|gpt-5/i.test(id);
+const thinker=id=>/gpt-oss|qwen-?3|qwq|deepseek|r1|think|o[134]-|gpt-5|grok-3-mini/i.test(id)||(/reason|grok-4/i.test(id)&&!/non-reasoning/i.test(id));
 async function ask(ctx,cfg,onText,signal,room,hint){const body={model:cfg.model,messages:brainPrompt(ctx),stream:true,temperature:0.8,max_tokens:room};if(hint&&thinker(cfg.model))body.reasoning_effort=/qwen/i.test(cfg.model)?'none':'low';let r;try{r=await fetch(base(cfg.url)+'/chat/completions',{method:'POST',signal,headers:{'Content-Type':'application/json',...auth()},body:JSON.stringify(body)})}catch(e){if(e.name==='AbortError')throw e;throw Error('Could not reach the brain service.')}if(!r.ok){if(body.reasoning_effort&&(r.status===400||r.status===422))return ask(ctx,cfg,onText,signal,room,false);throw await fail(r)}const reader=r.body.getReader(),dec=new TextDecoder();let buf='',raw='';for(;;){const {done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop();for(const line of lines){const l=line.trim();if(!l.startsWith('data:'))continue;const d=l.slice(5).trim();if(!d||d==='[DONE]')continue;try{raw+=JSON.parse(d).choices?.[0]?.delta?.content||''}catch{}const t=parseReply(raw,ctx.name).text;if(t)onText(t)}}return parseReply(raw,ctx.name)}
 // Streams a reply from the service. `signal` lets a prepared answer be dropped if the person kept talking.
 export async function remoteReply(ctx,cfg,onText=()=>{},signal){const first=await ask(ctx,cfg,onText,signal,thinker(cfg.model)?900:300,true);if(first.text)return first;return ask(ctx,cfg,onText,signal,2000,true)}
