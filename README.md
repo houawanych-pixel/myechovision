@@ -1,6 +1,6 @@
-# Echo Vision — Interface build 01
+# My Echo Vision — Interface build 01
 
-Standalone private storytelling prototype. Source of direction: Echo Vision Master Concept Bible v1.1 and owner's October 11 decisions. No Homelancer or Chronicle Clash canon is imported. Mira is a new placeholder character.
+Standalone private storytelling prototype. Source of direction: My Echo Vision Master Concept Bible v1.1 and owner's October 11 decisions. No Homelancer or Chronicle Clash canon is imported. Mira is a new placeholder character.
 
 ## Run
 Serve `app/` with any static web server. No build or dependency installation is needed. ES modules require HTTP rather than opening index.html directly.
