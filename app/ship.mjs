@@ -1,14 +1,50 @@
-// Walk the ship: a first-person walk through decks 4-6 of the Homelancer starship model, with sliding doors,
+// Walk mode. By default: a first-person walk through decks 4-6 of the Homelancer starship model, with sliding doors,
 // working turbolifts (call button outside, deck buttons inside) and Judy following on a camera-facing billboard.
+// Opened from a story (?session=<id>) it loads that story's scene and companion instead: the starship or the
+// person's own 3D world (.glb), and their companion as a billboard (picture or green-screen clips) or a 3D model.
 // Plan coordinates (ship-core.mjs) are x across, y toward the nose, z up; three.js uses (x, z, -y).
 import * as THREE from 'three';
 import { GLTFLoader } from './vendor/three/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from './vendor/three/libs/meshopt_decoder.module.js';
-import { buildPlan, slide, walkable, floorAt, roomAt, updateDoors, liftAt, liftNear, liftDoor, createFollower, recordTrail, stepFollower, placeFollower, EYE } from './ship-core.mjs?v=3';
+import { buildPlan, slide, walkable, floorAt, roomAt, updateDoors, liftAt, liftNear, liftDoor, createFollower, recordTrail, stepFollower, placeFollower, EYE } from './ship-core.mjs?v=4';
 
 const $ = id => document.getElementById(id);
 const V = (x, y, z) => new THREE.Vector3(x, z, -y);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const params = new URLSearchParams(location.search), NORENDER = params.has('norender');
+
+// ---------- what to load ----------
+// Files people upload in My Echo Vision live in this browser's IndexedDB; built-in ones are plain paths.
+function idbGet(key) {
+  return new Promise(res => {
+    try {
+      const r = indexedDB.open('echo-vision-media', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('files');
+      r.onsuccess = () => { try { const q = r.result.transaction('files').objectStore('files').get(key); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null) } catch { res(null) } };
+      r.onerror = () => res(null);
+    } catch { res(null) }
+  });
+}
+async function mediaOf(key) {
+  if (!key) return null;
+  if (!/^media-/.test(key)) return { url: key, video: /\.(mp4|webm|mov)(\?|$)/i.test(key) };
+  const b = await idbGet(key); return b ? { url: URL.createObjectURL(b), video: /^video\//.test(b.type) } : null;
+}
+async function loadConfig() {
+  const JUDY = { name: 'Judy', still: { url: 'assets/judy.webp' }, normal: { url: 'assets/judy-normal.mp4', video: true }, walk: { url: 'assets/judy-walk.mp4', video: true }, chroma: 'green', spill: 0.8, cut: true };
+  let st = null; try { st = JSON.parse(localStorage.getItem('echo-vision-studio-v2')) } catch { }
+  const sid = params.get('session'), sess = sid && st?.sessions?.find(x => x.id === sid);
+  if (!sess) return { world: 'ship', name: 'Walk the ship', partner: JUDY };
+  const scene = st.scenes.find(x => x.id === sess.scene) || {}, c = st.cast.find(x => x.id === sess.partner) || {};
+  const partner = c.id === 'judy' ? JUDY : {
+    name: c.name || 'Your companion', chroma: c.chroma || 'none', spill: c.spill ?? 0.8, rigged: !!c.rigged, cut: !!c.chroma && c.chroma !== 'none',
+    model: (await mediaOf(c.model))?.url || '', still: await mediaOf(c.image), normal: await mediaOf(c.clips?.normal || c.loop), walk: await mediaOf(c.clips?.walk)
+  };
+  return { world: !scene.world || scene.world === 'ship' ? 'ship' : (await mediaOf(scene.world))?.url || 'ship', name: scene.name || 'Your world', partner };
+}
+const CFG = await loadConfig(), P = CFG.partner, SHIP = CFG.world === 'ship';
+document.querySelector('.start h1').textContent = CFG.name;
+document.querySelector('.start p').textContent = SHIP ? `${P.name} walks with you. Doors open as you reach them. Step into a lift and choose a deck.` : `${P.name} walks with you. Use the stick to walk and turn.`;
 const ROOM_NAMES = { messhall: 'Mess hall', fcorr: 'Forward corridor', neck: 'Corridor', corridor: 'Crew corridor', corridor4: 'Crew corridor', aftneck: 'Corridor', aftcorr: 'Aft corridor', aftcorr4: 'Aft corridor', armory: 'Armory', brig: 'Brig', ecorr: 'Engineering hall', d6corr: 'Corridor', holodeck: 'Holodeck', gym: 'Gym', cargo: 'Cargo bay', crewlounge: 'Crew lounge', sickbay: 'Sickbay', transporter: 'Transporter room', d3corr: 'Corridor', sciencelab: 'Science lab', hydroponics: 'Hydroponics', cabin: 'Crew cabin' };
 const DECK_OF_ROOM = { sickbay: 'Deck 3', transporter: 'Deck 3', d3corr: 'Deck 3', lift_f3: 'Deck 3' };
 const DECK_LABEL = { 31: 'Deck 6', 36: 'Deck 5', 42: 'Deck 4' };
@@ -36,11 +72,15 @@ const DEFAULT_START = { p: [0, 79], yaw: Math.PI };   // deck 5 crew corridor be
 
 // ---------- loading ----------
 const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
-const [layout, gltf] = await Promise.all([
-  fetch('assets/ship/layout.json?v=1').then(r => r.json()),
-  loader.loadAsync('assets/ship/decks.glb?v=1')
-]);
-plan = buildPlan(layout);
+let gltf;
+if (SHIP) {
+  const [layout, g] = await Promise.all([fetch('assets/ship/layout.json?v=1').then(r => r.json()), loader.loadAsync('assets/ship/decks.glb?v=1')]);
+  gltf = g; plan = buildPlan(layout);
+} else {
+  // someone's own 3D world: no floor plan, so walking is checked against the model itself (see groundAt / blocked)
+  gltf = await loader.loadAsync(CFG.world);
+  plan = { open: true, rooms: [], doors: [], lifts: [], decks: [0] };
+}
 let doorMat = null;
 const holoMat = new THREE.ShaderMaterial({ vertexShader: 'varying vec3 wp;void main(){vec4 w=modelMatrix*vec4(position,1.0);wp=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
   fragmentShader: 'varying vec3 wp;void main(){vec3 g=abs(fract(wp/1.0)-0.5);float l=smoothstep(0.47,0.5,max(max(g.x,g.y),g.z)*0.0+min(min(max(g.x,g.y),max(g.y,g.z)),max(g.x,g.z)));gl_FragColor=vec4(vec3(0.02,0.02,0.02)+vec3(1.0,0.72,0.2)*l*0.9,1.0);}' });
@@ -61,6 +101,29 @@ gltf.scene.traverse(o => {
   o.frustumCulled = true;
 });
 scene.add(gltf.scene);
+const ray = new THREE.Raycaster(), DOWN = new THREE.Vector3(0, -1, 0), nrm = new THREE.Vector3();
+const upHit = h => { if (!h.face) return false; nrm.copy(h.face.normal).transformDirection(h.object.matrixWorld); return nrm.y > 0.55 };
+// the floor under a point: the first upward-facing surface below `from` metres
+function groundAt(p, from) {
+  ray.set(V(p[0], p[1], from), DOWN); ray.far = 60;
+  return ray.intersectObject(gltf.scene, true).find(upHit)?.point.y ?? null;
+}
+// is there a wall within reach in this direction, at knee and chest height?
+function blocked(p, floor, dx, dy) {
+  const L = Math.hypot(dx, dy); if (!L) return false;
+  const dir = new THREE.Vector3(dx / L, 0, -dy / L);
+  for (const h of [0.45, 1.2]) { ray.set(V(p[0], p[1], floor + h), dir); ray.far = L + 0.3; if (ray.intersectObject(gltf.scene, true).length) return true }
+  return false;
+}
+if (!SHIP) {
+  const box = new THREE.Box3().setFromObject(gltf.scene), size = box.getSize(new THREE.Vector3()), mid = box.getCenter(new THREE.Vector3());
+  const span = Math.max(size.x, size.y, size.z);
+  camera.far = Math.max(90, span * 3); camera.updateProjectionMatrix(); scene.fog.near = Math.max(18, span * 0.6); scene.fog.far = Math.max(55, span * 2);
+  // start in the middle, on the lowest floor there
+  ray.set(new THREE.Vector3(mid.x, box.max.y + 1, mid.z), DOWN); ray.far = size.y + 2;
+  const hits = ray.intersectObject(gltf.scene, true).filter(upHit);
+  CFG.start = { p: [mid.x, -mid.z], floor: hits.length ? hits.at(-1).point.y : box.min.y };
+}
 
 // ---------- doors ----------
 doorMat ??= new THREE.MeshStandardMaterial({ color: 0x8b93a5, metalness: 0.4, roughness: 0.5 });
@@ -92,9 +155,11 @@ function placeDoors() {
 // Her clips are green-screen videos framed from the head to mid-thigh; the key and a soft fade at the bottom
 // run in the shader, the same idea as the chat stage (stage.mjs), so she stands in the corridor with no box around her.
 const KEY_VS = 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}';
-const KEY_FS = `uniform sampler2D map;uniform float spill;uniform float light;varying vec2 vUv;
-void main(){vec4 c=texture2D(map,vUv);float k=c.g-max(c.r,c.b);float a=1.0-smoothstep(0.06,0.2,k);
-vec3 o=c.rgb;o.g=min(o.g,mix(o.g,max(o.r,o.b),spill));a*=c.a*smoothstep(0.0,0.3,vUv.y);if(a<0.02)discard;
+const KEY_FS = `uniform sampler2D map;uniform float spill;uniform float light;uniform float key;uniform float fadeBottom;varying vec2 vUv;
+void main(){vec4 c=texture2D(map,vUv);vec3 o=c.rgb;float a=1.0;
+if(key>1.5){float k=c.b-max(c.r,c.g);a=1.0-smoothstep(0.06,0.2,k);o.b=min(o.b,mix(o.b,max(o.r,o.g),spill));}
+else if(key>0.5){float k=c.g-max(c.r,c.b);a=1.0-smoothstep(0.06,0.2,k);o.g=min(o.g,mix(o.g,max(o.r,o.b),spill));}
+a*=c.a*smoothstep(0.0,fadeBottom,vUv.y);if(a<0.02)discard;
 gl_FragColor=vec4(o*light,a);
 #include <colorspace_fragment>
 }`;
@@ -104,18 +169,42 @@ function videoClip(src) {
   const tex = new THREE.VideoTexture(v); tex.colorSpace = THREE.SRGBColorSpace;
   return { v, tex };
 }
-const still = new THREE.TextureLoader().load('assets/judy.webp'); still.colorSpace = THREE.SRGBColorSpace;
-const clips = { normal: videoClip('assets/judy-normal.mp4'), walk: videoClip('assets/judy-walk.mp4') };
-const judyMat = new THREE.ShaderMaterial({ uniforms: { map: { value: still }, spill: { value: 0.8 }, light: { value: 1.0 } }, vertexShader: KEY_VS, fragmentShader: KEY_FS, transparent: true, depthWrite: false });
-const JH = 1.18, JW = JH * 400 / 736;
+const blank = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1); blank.needsUpdate = true;
+const stillSrc = P.still?.url || (P.normal && !P.normal.video ? P.normal.url : '');
+const still = stillSrc ? new THREE.TextureLoader().load(stillSrc, t => fitBillboard(t.image.width, t.image.height)) : blank; still.colorSpace = THREE.SRGBColorSpace;
+const clips = {};
+if (P.normal?.video) clips.normal = videoClip(P.normal.url);
+if (P.walk?.video) clips.walk = videoClip(P.walk.url);
+for (const c of Object.values(clips)) c.v.addEventListener('loadedmetadata', () => fitBillboard(c.v.videoWidth, c.v.videoHeight), { once: true });
+const judyMat = new THREE.ShaderMaterial({ uniforms: { map: { value: still }, spill: { value: P.spill ?? 0.8 }, light: { value: 1.0 }, key: { value: P.chroma === 'blue' ? 2 : P.chroma === 'green' ? 1 : 0 }, fadeBottom: { value: 0.3 } }, vertexShader: KEY_VS, fragmentShader: KEY_FS, transparent: true, depthWrite: false });
+// Green-screen clips are framed head to mid-thigh: about 1.2 m of her. A plain picture is shown a little larger.
+const JH = P.cut ? 1.18 : 1.3, JW = JH * 400 / 736;
 const judyMesh = new THREE.Mesh(new THREE.PlaneGeometry(JW, JH), judyMat);
 judyMesh.renderOrder = 10; scene.add(judyMesh);
+function fitBillboard(w, h) { if (w && h) judyMesh.scale.x = (w / h) / (400 / 736) }
+// a 3D companion instead of a billboard: scaled to 1.7 m; rigged models play walk and idle animations
+let model = null, mixer = null, acts = {}, actNow = null;
+if (P.model) {
+  try {
+    const g = await loader.loadAsync(P.model); model = g.scene;
+    const b = new THREE.Box3().setFromObject(model), h = b.max.y - b.min.y || 1, wide = Math.max(b.max.x - b.min.x, b.max.z - b.min.z) || 1, k = Math.min(1.7 / h, 2.0 / wide);   // person-sized, even if the model is not a person
+    model.scale.setScalar(k); model.position.y = -b.min.y * k;
+    const holder = new THREE.Group(); holder.add(model); scene.add(holder); model = holder; judyMesh.visible = false;
+    if (P.rigged && g.animations.length) {
+      mixer = new THREE.AnimationMixer(holder.children[0]);
+      const find = re => g.animations.find(a => re.test(a.name));
+      const walkA = find(/walk|run|move/i) || g.animations[0], idleA = find(/idle|stand|breath/i) || (g.animations.find(a => a !== walkA) || null);
+      acts.walk = mixer.clipAction(walkA); if (idleA) acts.idle = mixer.clipAction(idleA);
+    }
+  } catch { model = null }
+}
+function modelAnim(name) { const a = acts[name] || (name === 'idle' ? null : acts.walk); if (actNow === a) return; actNow?.fadeOut(0.25); actNow = a; a?.reset().fadeIn(0.25).play() }
 let judyClip = null;
 function showClip(name) {
   if (judyClip === name) return; judyClip = name;
   const c = clips[name];
   const playing = c && c.v.readyState >= 2 && !c.v.paused;
-  judyMat.uniforms.map.value = playing ? c.tex : still;
+  judyMat.uniforms.map.value = playing ? c.tex : (name === 'walk' && clips.normal && clips.normal.v.readyState >= 2 && !clips.normal.v.paused) ? clips.normal.tex : still;
 }
 
 // ---------- controls ----------
@@ -257,10 +346,15 @@ function frame(now) {
     if (Math.abs(my) < 0.12) my = 0;
     const fx = -Math.sin(player.yaw), fy = Math.cos(player.yaw), rx = Math.cos(player.yaw), ry = Math.sin(player.yaw);
     const sp = my < 0 ? 1.4 : 2.2, vx = (fx * my + rx * mx) * sp, vy = (fy * my + ry * mx) * sp;
-    const np = slide(plan, player.p, vx * dt, vy * dt, player.deck);
+    let np;
+    if (SHIP) np = slide(plan, player.p, vx * dt, vy * dt, player.deck);
+    else {
+      const q = player.p, dx = vx * dt, dy = vy * dt;
+      np = !blocked(q, player.floor, dx, dy) ? [q[0] + dx, q[1] + dy] : !blocked(q, player.floor, dx, 0) ? [q[0] + dx, q[1]] : !blocked(q, player.floor, 0, dy) ? [q[0], q[1] + dy] : q;
+    }
     player.vel = [(np[0] - player.p[0]) / dt, (np[1] - player.p[1]) / dt]; player.p = np;
     if (Math.hypot(vx, vy) > 0.1 && !hintTimer) hintTimer = setTimeout(() => $('hint').style.opacity = '0', 2500);
-    const fl = floorAt(plan, player.p, player.deck); player.floor += (fl - player.floor) * Math.min(1, dt * 4);
+    const fl = SHIP ? floorAt(plan, player.p, player.deck) : groundAt(player.p, player.floor + 1.2) ?? player.floor; player.floor += (fl - player.floor) * Math.min(1, dt * 6);
     recordTrail(judy, player.p, player.deck);
   } else player.vel = [0, 0];
   if (judy) { stepFollower(judy, plan, player, dt); if (started) footsteps() }
@@ -274,28 +368,38 @@ function frame(now) {
   if (inLift) { if (panelLift !== inLift || panel.style.display !== 'block') renderPanel(inLift); panel.style.display = 'block'; call.style.display = 'none' }
   else { panel.style.display = 'none'; panelLift = null; call.style.display = near && near.at !== player.deck ? 'block' : 'none' }
   // Judy: stand on the floor, face the camera, walk clip when she moves away from you
-  const jf = floorAt(plan, judy.p, judy.deck);
-  judyMesh.visible = judy.deck === player.deck;
-  judyMesh.position.copy(V(judy.p[0], judy.p[1], jf + 1.8 - JH / 2));
-  judyMesh.rotation.set(0, Math.atan2(camera.position.x - judyMesh.position.x, camera.position.z - judyMesh.position.z), 0);
-  const away = judy.moving && ((judy.p[0] - player.p[0]) * judy.vel[0] + (judy.p[1] - player.p[1]) * judy.vel[1]) > 0.3;
-  showClip(away ? 'walk' : 'normal');
+  if (!SHIP) { const g = groundAt(judy.p, (judy.floor ?? player.floor) + 1.2); judy.floor = g ?? judy.floor ?? player.floor }
+  const jf = SHIP ? floorAt(plan, judy.p, judy.deck) : judy.floor;
+  if (model) {
+    model.visible = judy.deck === player.deck;
+    model.position.copy(V(judy.p[0], judy.p[1], jf));
+    model.rotation.y = Math.atan2(camera.position.x - model.position.x, camera.position.z - model.position.z);
+    modelAnim(judy.moving ? 'walk' : 'idle'); mixer?.update(dt);
+  } else {
+    judyMesh.visible = judy.deck === player.deck;
+    judyMesh.position.copy(V(judy.p[0], judy.p[1], jf + 1.8 - JH / 2));
+    judyMesh.rotation.set(0, Math.atan2(camera.position.x - judyMesh.position.x, camera.position.z - judyMesh.position.z), 0);
+    const away = judy.moving && ((judy.p[0] - player.p[0]) * judy.vel[0] + (judy.p[1] - player.p[1]) * judy.vel[1]) > 0.3;
+    showClip(away ? 'walk' : 'normal');
+  }
   placeCamera();
   if (now - labelTimer > 300 && !riding) {
     labelTimer = now; const r = roomAt(plan, player.p, player.deck);
+    if (!SHIP) $('where').textContent = CFG.name; else {
     const deck = DECK_OF_ROOM[r?.name] || (r?.lift ? r.lift.stops.find(s => s.deck === player.deck)?.name : null) || DECK_LABEL[player.deck];
     $('where').textContent = deck + (r && !r.lift ? ' · ' + (ROOM_NAMES[r.name] || r.name.replace(/\d|[LR]$/g, '').replace(/^stub4?/, 'Cabin hall')) : r?.lift ? ' · Turbolift' : '');
-  }
+  } }
   if (!NORENDER) renderer.render(scene, camera);
 }
 
 // ---------- start ----------
-const params = new URLSearchParams(location.search), NORENDER = params.has('norender');
 player.p = [...DEFAULT_START.p]; player.yaw = DEFAULT_START.yaw;
+if (!SHIP) { player.p = CFG.start.p; player.deck = 0; player.floor = CFG.start.floor; player.yaw = 0 }
 if (params.get('at')) { const [x, y, z] = params.get('at').split(',').map(Number); player.p = [x, y]; if (z) { player.deck = z; player.floor = z } }
 if (params.get('yaw')) player.yaw = Number(params.get('yaw'));
 judy = createFollower([player.p[0] + Math.sin(player.yaw) * 1.45, player.p[1] - Math.cos(player.yaw) * 1.45], player.deck);
 if (!walkable(plan, judy.p, judy.deck)) placeFollower(judy, player.p, player.deck);
+judy.floor = player.floor;
 judy.trail = [[...player.p]];
 placeDoors(); placeCamera();
 requestAnimationFrame(frame);

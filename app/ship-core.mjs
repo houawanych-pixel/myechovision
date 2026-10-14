@@ -103,6 +103,7 @@ function inDoorway(p, d, r = RADIUS) {
 // Can a body of radius r stand at p on this deck? Inside a room (clear of its walls) or in an open doorway.
 // A lift room counts only while its car is on this deck.
 export function walkable(plan, p, deck, r = RADIUS) {
+  if (plan.open) return true;   // someone's own 3D world: the page checks walls against the model itself
   for (const d of plan.doors) if (d.deck === deck && d.works && d.open > 0.75 && inDoorway(p, d, r)) return true;
   for (const room of plan.rooms) {
     if (room.deck !== deck || !inside(p, room.poly)) continue;
