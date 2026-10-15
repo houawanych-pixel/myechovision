@@ -103,3 +103,4 @@ main.storyView{max-width:900px}@media(max-width:800px){main.storyView .content{p
 #guideBot .gbHide{pointer-events:auto;position:absolute;top:-6px;right:-4px;width:20px;height:20px;padding:0;border-radius:50%;font-size:12px;line-height:18px;opacity:.7}
 @keyframes gbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@keyframes gbCore{0%,100%{box-shadow:0 0 10px 3px #6cd3ff99}50%{box-shadow:0 0 18px 7px #6cd3ffcc}}@keyframes gbTalk{from{opacity:.8}to{opacity:1;filter:brightness(1.4)}}
 body:has(#guidePanel) #guideBot{bottom:190px}#guideBot{transition:bottom .3s}
+body.call:not(.showChips) .chips{display:none}#callHome{font-size:20px;line-height:1;padding:4px 10px;flex:0 0 auto}
