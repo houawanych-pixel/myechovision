@@ -12,10 +12,13 @@ place you escaped — and someone there is growing something as a weapon.
 ## The crew (who you meet)
 - **Kara Venn** — crew chief, blunt, protective, keeps her people alive first.
 - **Tobin "Rook" Ashe** — tech support, jittery, talks when scared, best with locks and systems.
-- **Sera Vale** — veteran hunter, dead calm, nothing scares her (or so it looks).
+- **Sera Vale** — veteran hunter, dead calm. Kara's oldest friend: ten years on this crew, the one everyone leans
+  on. Quietly drowning in debt and tired of running. She is the one who turns.
+- **Dex Morrow** — the pilot. Few words, never leaves the ship, never leaves anyone behind.
 - **Unit Seven** — the crew's android medic. Nobody trusts it after "last time". It earns its place.
-- **Mira** — a child survivor found at the station (the one you go back for).
-- Hidden: **Director Hale** — the company man aboard the station (or on comms) running the weapon program.
+- **Lyra Voss** — found at the station: a woman the company half-rebuilt with machine parts, everyone (even
+  she) thinks she's already gone. Torn between the machine they made her and the human still inside.
+- Hidden: **Director Hale** — the company man running the weapon program from the station.
 
 ## Checkpoints
 Memory fragments are marked **[M1]…[M5]**. Each returns in pieces, as a flash the narrator reads.
@@ -45,25 +48,40 @@ Memory fragments are marked **[M1]…[M5]**. Each returns in pieces, as a flash 
    - something on the lower decks answers the alarm.
    You fixed it and made it worse. (In the app: the music turns scary, the scary sounds come on and get closer.)
    **[M3]** You know this alarm. You know the way to the lower labs without a map.
-6. **The labs.** Logs show the species being bred and studied. You find Mira hiding in the ducts.
-   **[M4]** You worked here. You were the one who tried to get the test subjects out, and they caught you.
-7. **The twist.** **[M5]** It all comes back: you weren't drifting by accident. You escaped *this* station,
-   and the company behind it, and you have been carried straight back to the one place you ran from.
-   Director Hale comes on comms and knows your name. Your own SOS was the company's leash: the recovery order
-   on your beacon was written to bring you home. You called for help, and help carried you back into it. The crew had no idea; they're on your side, and now they're
-   targets too.
-8. **Losses and the last stand.** The hunt closes in; the crew is cut down to the few who matter. Unit Seven
-   holds a door and is torn in half — and still talks you through the escape route.
-9. **Go back.** At the shuttle, safe, you realize Mira was taken below. Everyone says leave. You go back.
-10. **Ending.** You bring Mira out, with what is left of Unit Seven and whoever is still standing, and you
-    choose what happens to the station and the proof of what Hale built.
+6. **The labs — Lyra.** Logs show the species being bred as a weapon. Deep in the lab Unit Seven finds someone
+   the scans say is dead: Lyra, half machine, wired into the program. Everyone wants to leave her. Unit Seven
+   carries her out anyway — the machine saving the woman who isn't sure she's still human.
+   **[M4]** You worked here. You tried to get the test subjects out, and they caught you.
+7. **The twist.** **[M5]** It all comes back: you weren't drifting by accident. You escaped *this* station, and
+   your own SOS — its recovery order — carried you straight back to it. Director Hale comes on comms and knows
+   your name. The crew had no idea; they're on your side, and now they're targets too.
+8. **The betrayal.** Hale makes an offer on an open channel: hand over you and Lyra, and the crew walks away
+   rich. Sera takes it. Not out of hate — out of ten years of being tired, sure that one deal fixes
+   everything: her debt, the danger, getting everyone home. She seals a blast door between the crew and the
+   ship and tells Kara she's saving them. It doesn't save anyone. Hale opens the pens anyway. (Heartbreak: the
+   one they trusted most. Leave room for a last word between Sera and Kara.)
+9. **The big fight and Lyra's sacrifice.** The hunt breaks loose through the open doors. Cornered, Lyra holds
+   the line alone with everything the company built into her so the rest can reach the ship — and loses her
+   legs and an arm doing it. The last anyone sees is the door closing on her. She's gone. That's what they
+   believe, and so does she: all that's left is her upper body and one arm, crawling through the dark, hoping
+   it ends.
+10. **"Turn the ship around."** Aboard, lifting off. The station's core is going critical; when it goes it takes
+    the planet's skies with it. Then, on comms: static… and inside it, a voice. Lyra, alone, crying. Everyone
+    looks at you. "No way. You're not thinking about going back. It's too dangerous. She's as good as dead."
+    A beat. Then Kara: "With you to the end." Rook, shaking: "…Yeah. With you." You: "Turn the ship around."
+    Dex: "It's going to blow. There's no way we make it back out in time." Then he banks the ship around
+    anyway. They go back for her.
+11. **Ending.** Unit Seven goes in for Lyra — the machine carrying the woman who thought she was only a machine
+    now — while the core counts down. Everyone who chose to come back gets out with her, or doesn't. Your call,
+    and what you do with the proof of Hale's program, decide how it ends.
 
 ## Notes
 - The gut-punch: your own SOS is what drags everyone back. You called for help, and help is carrying you
   into the nightmare you fled.
 - Twist: the crew that finds you is **not** the threat and never was. The **destination** — the station and
   the company behind it — is what you fled. The horror is where you're going, not who saved you.
-- Group reactions: one surprised, one scared, one calm (Sera) — same sound, different people.
+- Group reactions: one surprised (Kara), one scared (Rook), one calm (Sera) — same sound, different people.
+- Sera's calm is the tell: the one who never flinches is the one who has already decided.
 - Sound: booms and wall-skittering start at checkpoint 3 and build; music turns scary, then epic chase at 5.
-- To play it now: Create → Your story → paste checkpoint 0 as the Beginning, 1–9 as chapters, 10 as the
+- To play it now: Create → Your story → paste checkpoint 0 as the Beginning, 1–10 as chapters, 11 as the
   ending. The narrator reads each one as you reach it.
