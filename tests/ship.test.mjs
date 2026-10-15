@@ -86,3 +86,32 @@ test('walking at her makes her circle around you at the same distance', () => {
   assert.ok(minD > 0.85, 'kept clear of you, closest ' + minD.toFixed(2));
   assert.ok(f.p[1] > player.p[1] - 0.5, 'she went around you rather than being pushed ahead');
 });
+
+test('a world layout (from a .glb) gets named lift stops, its own start floor and working doors', () => {
+  const rect = (x0, x1, y0, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+  const lay = {
+    decks: [4, 0], liftStart: 0,
+    rooms: [
+      { n: 'hall', p: rect(-1.2, 1.2, 0.3, 9.7), z: 0, h: 3, label: 'Hall' },
+      { n: 'lift_A', p: rect(-1.4, 1.4, 10.3, 12.7), z: 0, h: 3, label: 'Dock' },
+      { n: 'lift_A', p: rect(-1.4, 1.4, 10.3, 12.7), z: 4, h: 3, label: 'Bridge' },
+      { n: 'bridge', p: rect(-5, 5, 13.3, 20), z: 4, h: 4, label: 'Bridge' },
+    ],
+    doors: [{ x: 0, y: 10, z: 0, w: 2.4 }, { x: 0, y: 13, z: 4, w: 2.4 }],
+  };
+  const plan = buildPlan(lay, lay.decks);
+  assert.equal(plan.lifts.length, 1);
+  const L = plan.lifts[0];
+  assert.deepEqual(L.stops.map(s => s.name), ['Bridge', 'Dock']);
+  assert.equal(L.at, 0);
+  assert.equal(plan.rooms[0].label, 'Hall');
+  const d0 = liftDoor(plan, L, 0), d4 = liftDoor(plan, L, 4);
+  assert.ok(d0.works && d4.works);
+  // shut door blocks, open door lets you through
+  assert.equal(walkable(plan, [0, 10], 0), false);
+  updateDoors(plan, [{ p: [0, 9], deck: 0 }], 2);
+  assert.equal(walkable(plan, [0, 10], 0), true);
+  // the bridge-side door stays shut while the car is down at the dock
+  updateDoors(plan, [{ p: [0, 14], deck: 4 }], 2);
+  assert.ok(d4.open < 0.01);
+});

@@ -34,10 +34,10 @@ export function buildPlan(layout, decks = [31, 36, 42]) {
   for (const r of layout.rooms) {
     const deck = decks.find(d => r.z > d - 2.5 && r.z <= d + 0.6);
     if (deck === undefined) continue;
-    rooms.push({ name: r.n, poly: r.p, floor: r.z, deck, h: r.h });
+    rooms.push({ name: r.n, poly: r.p, floor: r.z, deck, h: r.h, label: r.label });
   }
   // crew cabins (14.4 x 7.6 m) are separate models placed at these centres, mirrored to both sides
-  for (const [z, list] of layout.cabins) {
+  for (const [z, list] of layout.cabins || []) {
     if (!decks.includes(z)) continue;
     for (const [x, y] of list) for (const s of [1, -1])
       rooms.push({ name: 'cabin', poly: rect(s * x - 7.0, s * x + 7.0, y - 3.6, y + 3.6), floor: z, deck: z, h: 3.4 });
@@ -50,10 +50,10 @@ export function buildPlan(layout, decks = [31, 36, 42]) {
     let L = lifts.find(l => Math.hypot(l.x - cx, l.y - cy) < 0.5);
     if (!L) { L = { id: 'lift' + lifts.length, x: cx, y: cy, poly: r.poly, stops: [], at: null, moving: false, label: r.name }; lifts.push(L) }
     const num = (r.name.match(/\d/) || ['?'])[0];
-    L.stops.push({ deck: r.deck, name: 'Deck ' + num });
+    L.stops.push({ deck: r.deck, name: r.label || 'Deck ' + num });   // a world's own layout may name its stops
     r.lift = L;
   }
-  for (const L of lifts) { L.stops.sort((a, b) => b.deck - a.deck); L.at = L.stops.find(s => s.deck === 36)?.deck ?? L.stops[0].deck }
+  for (const L of lifts) { L.stops.sort((a, b) => b.deck - a.deck); L.at = L.stops.find(s => s.deck === (layout.liftStart ?? 36))?.deck ?? L.stops[0].deck }
   // doors: oriented along the nearest wall; a door only works when there is floor on both sides of it
   const doors = [];
   for (const d of layout.doors) {

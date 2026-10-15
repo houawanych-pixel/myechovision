@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from './vendor/three/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from './vendor/three/libs/meshopt_decoder.module.js';
 import { createTalk } from './ship-talk.mjs?v=2';
-import { buildPlan, slide, walkable, floorAt, roomAt, updateDoors, liftAt, liftNear, liftDoor, createFollower, recordTrail, stepFollower, placeFollower, EYE } from './ship-core.mjs?v=4';
+import { buildPlan, slide, walkable, floorAt, roomAt, updateDoors, liftAt, liftNear, liftDoor, createFollower, recordTrail, stepFollower, placeFollower, EYE } from './ship-core.mjs?v=5';
 
 const $ = id => document.getElementById(id);
 const V = (x, y, z) => new THREE.Vector3(x, z, -y);
@@ -74,9 +74,18 @@ addEventListener('resize', resize); resize();
 let plan = null;
 const player = { p: [0, 79], deck: 36, yaw: 0, pitch: 0, vel: [0, 0], floor: 36 };
 let judy = null, riding = false, started = false;
+// a world's own .glb can carry a floor plan (scene extras "echoLayout", same format as assets/ship/layout.json):
+// then it walks like the starship, with sliding doors and lifts, instead of feeling its way along the model
+let PLAN = SHIP, WORLD_LAYOUT = null;
 const DEFAULT_START = { p: [0, 79], yaw: Math.PI };   // deck 5 crew corridor beside the middle lift, facing the stern
 
 // ---------- loading ----------
+function worldLayout(g) {
+  const json = g.parser?.json, sc = json?.scenes?.[json.scene ?? 0];
+  let L = g.scene?.userData?.echoLayout ?? sc?.extras?.echoLayout;
+  if (typeof L === 'string') { try { L = JSON.parse(L) } catch { L = null } }
+  return L && Array.isArray(L.rooms) && Array.isArray(L.doors) && Array.isArray(L.decks) ? L : null;
+}
 const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 let gltf;
 if (SHIP) {
@@ -85,7 +94,9 @@ if (SHIP) {
 } else {
   // someone's own 3D world: no floor plan, so walking is checked against the model itself (see groundAt / blocked)
   gltf = await loader.loadAsync(CFG.world);
-  plan = { open: true, rooms: [], doors: [], lifts: [], decks: [0] };
+  WORLD_LAYOUT = worldLayout(gltf);
+  if (WORLD_LAYOUT) { plan = buildPlan(WORLD_LAYOUT, WORLD_LAYOUT.decks); PLAN = true }
+  else plan = { open: true, rooms: [], doors: [], lifts: [], decks: [0] };
 }
 let doorMat = null;
 // windows look out into space: the glass shows a 360 sky in the direction you look through it, so it moves like a real view
@@ -419,20 +430,20 @@ function frame(now) {
     const fx = -Math.sin(player.yaw), fy = Math.cos(player.yaw), rx = Math.cos(player.yaw), ry = Math.sin(player.yaw);
     const sp = my < 0 ? 1.4 : 2.2, vx = (fx * my + rx * mx) * sp, vy = (fy * my + ry * mx) * sp;
     let np;
-    if (SHIP) np = slide(plan, player.p, vx * dt, vy * dt, player.deck);
+    if (PLAN) np = slide(plan, player.p, vx * dt, vy * dt, player.deck);
     else {
       const q = player.p, dx = vx * dt, dy = vy * dt;
       np = !blocked(q, player.floor, dx, dy) ? [q[0] + dx, q[1] + dy] : !blocked(q, player.floor, dx, 0) ? [q[0] + dx, q[1]] : !blocked(q, player.floor, 0, dy) ? [q[0], q[1] + dy] : q;
     }
     player.vel = [(np[0] - player.p[0]) / dt, (np[1] - player.p[1]) / dt]; player.p = np;
     
-    const fl = SHIP ? floorAt(plan, player.p, player.deck) : groundAt(player.p, player.floor + 1.2) ?? player.floor; player.floor += (fl - player.floor) * Math.min(1, dt * 6);
+    const fl = PLAN ? floorAt(plan, player.p, player.deck) : groundAt(player.p, player.floor + 1.2) ?? player.floor; player.floor += (fl - player.floor) * Math.min(1, dt * 6);
     recordTrail(judy, player.p, player.deck);
   } else player.vel = [0, 0];
   if (judy) { stepFollower(judy, plan, player, dt); if (started) footsteps() }
   for (const e of EXTRAS) {
     if (!e.f) continue; recordTrail(e.f, player.p, player.deck); stepFollower(e.f, plan, player, dt);
-    const o = laneOffset(e.f, e.lane, e.off, dt), ef = SHIP ? floorAt(plan, e.f.p, e.f.deck) : (groundAt(e.f.p, player.floor + 1.2) ?? player.floor);
+    const o = laneOffset(e.f, e.lane, e.off, dt), ef = PLAN ? floorAt(plan, e.f.p, e.f.deck) : (groundAt(e.f.p, player.floor + 1.2) ?? player.floor);
     e.mesh.visible = e.f.deck === player.deck; e.mesh.position.copy(V(e.f.p[0] + o[0], e.f.p[1] + o[1], e.full ? ef + FULL_H / 2 : ef + TOP - JH / 2));
     if (e.full) { const v = e.clips.walk.v; if (e.f.moving && v.paused && started) v.play().catch(() => { }); else if (!e.f.moving && !v.paused) v.pause() }
     e.mesh.rotation.set(0, Math.atan2(camera.position.x - e.mesh.position.x, camera.position.z - e.mesh.position.z), 0);
@@ -448,8 +459,8 @@ function frame(now) {
   if (inLift) { if (panelLift !== inLift || panel.style.display !== 'block') renderPanel(inLift); panel.style.display = 'block'; call.style.display = 'none' }
   else { panel.style.display = 'none'; panelLift = null; call.style.display = near && near.at !== player.deck ? 'block' : 'none' }
   // Judy: stand on the floor, face the camera, walk clip when she moves away from you
-  if (!SHIP) { const g = groundAt(judy.p, (judy.floor ?? player.floor) + 1.2); judy.floor = g ?? judy.floor ?? player.floor }
-  const jf = SHIP ? floorAt(plan, judy.p, judy.deck) : judy.floor;
+  if (!PLAN) { const g = groundAt(judy.p, (judy.floor ?? player.floor) + 1.2); judy.floor = g ?? judy.floor ?? player.floor }
+  const jf = PLAN ? floorAt(plan, judy.p, judy.deck) : judy.floor;
   if (model) {
     model.visible = judy.deck === player.deck;
     model.position.copy(V(judy.p[0], judy.p[1], jf));
@@ -465,7 +476,7 @@ function frame(now) {
   placeCamera();
   if (now - labelTimer > 300 && !riding) {
     labelTimer = now; const r = roomAt(plan, player.p, player.deck);
-    if (!SHIP) $('where').textContent = CFG.name; else {
+    if (!SHIP) $('where').textContent = WORLD_LAYOUT ? CFG.name + (r?.lift ? ' · Lift' : r?.label ? ' · ' + r.label : '') : CFG.name; else {
     const deck = DECK_OF_ROOM[r?.name] || (r?.lift ? r.lift.stops.find(s => s.deck === player.deck)?.name : null) || DECK_LABEL[player.deck];
     $('where').textContent = deck + (r && !r.lift ? ' · ' + (ROOM_NAMES[r.name] || r.name.replace(/\d|[LR]$/g, '').replace(/^stub4?/, 'Cabin hall')) : r?.lift ? ' · Turbolift' : '');
   } }
@@ -560,6 +571,8 @@ async function startTalk() {
 // ---------- start ----------
 player.p = [...DEFAULT_START.p]; player.yaw = DEFAULT_START.yaw;
 if (!SHIP) { player.p = CFG.start.p; player.deck = 0; player.floor = CFG.start.floor; player.yaw = 0 }
+if (WORLD_LAYOUT?.start) { const st = WORLD_LAYOUT.start; player.p = [...st.p]; player.deck = st.deck; player.floor = st.deck; player.yaw = st.yaw || 0 }
+if (WORLD_LAYOUT) document.querySelector('.start p').textContent = `${P.name} walks with you. Doors open as you reach them. Step into a lift and choose a floor.`;
 if (params.get('at')) { const [x, y, z] = params.get('at').split(',').map(Number); player.p = [x, y]; if (z) { player.deck = z; player.floor = z } }
 if (params.get('yaw')) player.yaw = Number(params.get('yaw'));
 judy = createFollower([player.p[0] + Math.sin(player.yaw) * 1.2, player.p[1] - Math.cos(player.yaw) * 1.2], player.deck, { gap: 1.2, near: 0.85 });
