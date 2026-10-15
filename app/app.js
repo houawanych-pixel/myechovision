@@ -1,9 +1,9 @@
-import {validLoop,storyText,demoReply,pcmToWav,sameUtterance,outlineAsk,readOutline,scriptAsk,readBeats,beatsToText,textToBeats,GENRES,STORY_SHAPES,pickFrom,gestureFor,actionFor,EXPRESSIONS,ACTIONS,clipPrompt,basePicturePrompt,voiceClipPrompt,voiceFromMedia,walkPicturePrompt,fullBodyPicturePrompt,walkClipPrompt} from './core.mjs?v=18';
+import {validLoop,storyText,demoReply,pcmToWav,sameUtterance,outlineAsk,readOutline,scriptAsk,readBeats,beatsToText,textToBeats,GENRES,STORY_SHAPES,pickFrom,gestureFor,actionFor,EXPRESSIONS,ACTIONS,clipPrompt,basePicturePrompt,voiceClipPrompt,voiceFromMedia,walkPicturePrompt,fullBodyPicturePrompt,walkClipPrompt} from './core.mjs?v=19';
 import {createStage,isVideo} from './stage.mjs?v=14';
 import * as clone from './clone.mjs?v=6';
-import * as brain from './brain.mjs?v=18';
+import * as brain from './brain.mjs?v=19';
 import * as vault from './vault.mjs?v=1';
-import {openStoryMode} from './story.mjs?v=6';
+import {openStoryMode} from './story.mjs?v=7';
 import {liveCast,castId,nameCalled,questStep,questStatus} from './story-core.mjs?v=1';
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const seed={cast:[{id:'mira',name:'Mira',role:'Explorer',persona:'Warm, curious and quietly brave. A traveler with a love of unfamiliar places.',image:'assets/mira.webp'},{id:'you',name:'Your character',role:'Protagonist',persona:'Write your own identity and bring your own portrait.',image:''}],scenes:[{id:'observatory',name:'Twilight observatory',details:'A glass observatory overlooks mountains as the last light fades.',art:''},{id:'city',name:'The midnight city',details:'Lanterns light the streets of an unfamiliar city. A new journey is about to begin.',art:''},{id:'garden',name:'A hidden garden',details:'A quiet garden behind an old library, scented with rain.',art:''}],sessions:[],samples:[],selection:{player:'you',partner:'mira',scene:'observatory',voice:''},active:null};
@@ -33,7 +33,10 @@ const mediaType={};
 const kindOf=key=>mediaType[key]||(/\.(mp4|webm|mov)(\?|$)/i.test(key||'')?'video/mp4':'image/webp');
 const clipOf=key=>{const src=key&&mediaURL(key);return src?{src,type:kindOf(key)}:null};
 // Everything the stage can show for a character: expression and action slots, with the portrait or loop as the normal look.
-function charClips(c){const out={};for(const [slot,key] of Object.entries(c.clips||{})){const k=clipOf(key);if(k)out[slot]=k}for(const a of c.actions||[]){const k=clipOf(a.media);if(k){if(a.sound)k.sound=true;out[a.id]=k}}if(!out.normal){const k=clipOf(c.loop)||clipOf(c.image);if(k)out.normal=k}return out}
+// Reaction clips (Scared, Surprised, Laugh) may carry her own short gasp, yelp or laugh. That sound plays the instant the
+// clip shows, outside the one-voice-at-a-time queue, because it is part of the reaction, not a spoken line.
+const REACTION_SOUND=['scared','surprised','laugh'];
+function charClips(c){const out={};for(const [slot,key] of Object.entries(c.clips||{})){const k=clipOf(key);if(k){if(REACTION_SOUND.includes(slot)&&c.reactSound!==false)k.sound=true;out[slot]=k}}for(const a of c.actions||[]){const k=clipOf(a.media);if(k){if(a.sound)k.sound=true;out[a.id]=k}}if(!out.normal){const k=clipOf(c.loop)||clipOf(c.image);if(k)out.normal=k}return out}
 const usesStage=c=>!!(Object.keys(c.clips||{}).length||(c.actions||[]).length||(c.chroma&&c.chroma!=='none')||c.ambient);
 let stage=null,storyMode=null;
 const eventSays=e=>e.says||(/flicker/i.test(e.media)?'the lights flicker and buzz overhead':/door|hatch/i.test(e.media)?'a door opens somewhere nearby':/walk|step/i.test(e.media)?'someone walking past in the distance':/alarm/i.test(e.media)?'an alarm going off':'something changes around you');

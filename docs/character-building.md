@@ -34,6 +34,7 @@ Give the generator the base picture and this prompt, with one ACTION line. Make 
 Use the provided image as the exact first frame and the exact last frame.
 The character stays in place: same framing, same position, same size, same lighting, same clothing. Fixed camera, no zoom, no cuts. Plain solid green background that never changes, evenly lit, with no shadows on it. No text and nothing entering the frame.
 (For actions such as dances, waves and your own: keep both hands and arms inside the frame the whole time; keep the movement compact enough that nothing is cut off.)
+(Scared, Surprised and Laugh may carry her own short reaction sound, a gasp, a yelp or a laugh. It plays the moment the clip shows, even while someone else is talking. Every other clip is silent.)
 She begins in the neutral pose, performs the action below, and returns to the identical neutral pose by the end, so the clip loops seamlessly.
 Length: 8 to 10 seconds. Vertical portrait, 2:3, the same shape as the picture. No sound needed.
 
