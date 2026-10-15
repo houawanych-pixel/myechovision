@@ -1,4 +1,4 @@
-import {validLoop,storyText,demoReply,pcmToWav,sameUtterance,outlineAsk,readOutline,scriptAsk,readBeats,beatsToText,textToBeats,GENRES,STORY_SHAPES,pickFrom,gestureFor,actionFor,EXPRESSIONS,ACTIONS,clipPrompt,basePicturePrompt,voiceClipPrompt,voiceFromMedia,walkPicturePrompt,fullBodyPicturePrompt,walkClipPrompt} from './core.mjs?v=14';
+import {validLoop,storyText,demoReply,pcmToWav,sameUtterance,outlineAsk,readOutline,scriptAsk,readBeats,beatsToText,textToBeats,GENRES,STORY_SHAPES,pickFrom,gestureFor,actionFor,EXPRESSIONS,ACTIONS,clipPrompt,basePicturePrompt,voiceClipPrompt,voiceFromMedia,walkPicturePrompt,fullBodyPicturePrompt,walkClipPrompt} from './core.mjs?v=15';
 import {createStage,isVideo} from './stage.mjs?v=12';
 import * as clone from './clone.mjs?v=6';
 import * as brain from './brain.mjs?v=15';
