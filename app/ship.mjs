@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from './vendor/three/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from './vendor/three/libs/meshopt_decoder.module.js';
+import { createTalk } from './ship-talk.mjs?v=1';
 import { buildPlan, slide, walkable, floorAt, roomAt, updateDoors, liftAt, liftNear, liftDoor, createFollower, recordTrail, stepFollower, placeFollower, EYE } from './ship-core.mjs?v=4';
 
 const $ = id => document.getElementById(id);
@@ -31,14 +32,14 @@ async function mediaOf(key) {
   const b = await idbGet(key); return b ? { url: URL.createObjectURL(b), video: /^video\//.test(b.type) } : null;
 }
 async function loadConfig() {
-  const JUDY = { name: 'Judy', still: { url: 'assets/judy.webp' }, normal: { url: 'assets/judy-normal.mp4', video: true }, walk: { url: 'assets/judy-walk.mp4', video: true }, chroma: 'green', spill: 0.8, cut: true };
+  const JUDY = { name: 'Judy', still: { url: 'assets/judy.webp' }, normal: { url: 'assets/judy-normal.mp4', video: true }, walk: { url: 'assets/judy-walk.mp4', video: true }, talk: { url: 'assets/judy-talk.mp4', video: true }, chroma: 'green', spill: 0.8, cut: true };
   let st = null; try { st = JSON.parse(localStorage.getItem('echo-vision-studio-v2')) } catch { }
   const sid = params.get('session'), sess = sid && st?.sessions?.find(x => x.id === sid);
   if (!sess) return { world: 'ship', name: 'Walk the ship', partner: JUDY };
   const scene = st.scenes.find(x => x.id === sess.scene) || {}, c = st.cast.find(x => x.id === sess.partner) || {};
   const partner = c.id === 'judy' ? JUDY : {
     name: c.name || 'Your companion', chroma: c.chroma || 'none', spill: c.spill ?? 0.8, rigged: !!c.rigged, cut: !!c.chroma && c.chroma !== 'none',
-    model: (await mediaOf(c.model))?.url || '', still: await mediaOf(c.image), normal: await mediaOf(c.clips?.normal || c.loop), walk: await mediaOf(c.clips?.walk)
+    model: (await mediaOf(c.model))?.url || '', still: await mediaOf(c.image), normal: await mediaOf(c.clips?.normal || c.loop), walk: await mediaOf(c.clips?.walk), talk: await mediaOf(c.clips?.talking)
   };
   return { world: !scene.world || scene.world === 'ship' ? 'ship' : (await mediaOf(scene.world))?.url || 'ship', name: scene.name || 'Your world', partner };
 }
@@ -52,7 +53,7 @@ const DECK_LABEL = { 31: 'Deck 6', 36: 'Deck 5', 42: 'Deck 4' };
 // ---------- renderer and scene ----------
 const canvas = $('view');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));   // sharp on phones (her clip especially)
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.2;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0b0e19);
@@ -163,7 +164,8 @@ void main(){vec4 c=texture2D(map,vUv);vec3 o=c.rgb;float a=1.0;
 if(key>1.5){float k=c.b-max(c.r,c.g);a=1.0-smoothstep(0.06,0.2,k);o.b=min(o.b,mix(o.b,max(o.r,o.g),spill));}
 else if(key>0.5){float k=c.g-max(c.r,c.b);a=1.0-smoothstep(0.06,0.2,k);o.g=min(o.g,mix(o.g,max(o.r,o.b),spill));}
 a*=c.a*smoothstep(0.0,fadeBottom,vUv.y);if(a<0.02)discard;
-gl_FragColor=vec4(o*light,a);
+o=mix(vec3(dot(o,vec3(0.299,0.587,0.114))),o,1.12);o=(o-0.5)*1.06+0.5;   // a touch more colour and contrast: keyed clips look washed out otherwise
+gl_FragColor=vec4(clamp(o,0.0,1.0)*light,a);
 #include <colorspace_fragment>
 }`;
 function videoClip(src) {
@@ -178,6 +180,7 @@ const still = stillSrc ? new THREE.TextureLoader().load(stillSrc, t => fitBillbo
 const clips = {};
 if (P.normal?.video) clips.normal = videoClip(P.normal.url);
 if (P.walk?.video) clips.walk = videoClip(P.walk.url);
+if (P.talk?.video) clips.talk = videoClip(P.talk.url);
 for (const c of Object.values(clips)) c.v.addEventListener('loadedmetadata', () => fitBillboard(c.v.videoWidth, c.v.videoHeight), { once: true });
 const judyMat = new THREE.ShaderMaterial({ uniforms: { map: { value: still }, spill: { value: P.spill ?? 0.8 }, light: { value: 1.0 }, key: { value: P.chroma === 'blue' ? 2 : P.chroma === 'green' ? 1 : 0 }, fadeBottom: { value: 0.3 } }, vertexShader: KEY_VS, fragmentShader: KEY_FS, transparent: true, depthWrite: false });
 // She is shown big, the way she fills the screen in chat: close to you, her head a little above your eye line,
@@ -222,7 +225,7 @@ canvas.addEventListener('contextmenu', e => e.preventDefault());
 const PITCH_DOWN = -0.2, PITCH_UP = 0.55;
 const stickCentre = () => { const r = knob.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2] };
 addEventListener('pointerdown', e => {
-  if (!started || e.target.closest('button,a,.panel')) return;
+  if (!started || e.target.closest('button,a,.panel,input,form,canvas#radar,.bigmap')) return;
   const left = e.clientX < innerWidth / 2;
   if (left && stickId === null) { stickId = e.pointerId; stickO = stickCentre(); knob.classList.add('on'); moveStick(e) }
   else if (!left && lookId === null) { lookId = e.pointerId; lookLast = [e.clientX, e.clientY] }
@@ -384,7 +387,7 @@ function frame(now) {
     judyMesh.position.copy(V(judy.p[0], judy.p[1], jf + TOP - JH / 2));
     judyMesh.rotation.set(0, Math.atan2(camera.position.x - judyMesh.position.x, camera.position.z - judyMesh.position.z), 0);
     const away = judy.moving && ((judy.p[0] - player.p[0]) * judy.vel[0] + (judy.p[1] - player.p[1]) * judy.vel[1]) > 0.3;
-    showClip(away ? 'walk' : 'normal');
+    showClip(talking && clips.talk ? 'talk' : away ? 'walk' : 'normal');
   }
   placeCamera();
   if (now - labelTimer > 300 && !riding) {
@@ -393,7 +396,86 @@ function frame(now) {
     const deck = DECK_OF_ROOM[r?.name] || (r?.lift ? r.lift.stops.find(s => s.deck === player.deck)?.name : null) || DECK_LABEL[player.deck];
     $('where').textContent = deck + (r && !r.lift ? ' · ' + (ROOM_NAMES[r.name] || r.name.replace(/\d|[LR]$/g, '').replace(/^stub4?/, 'Cabin hall')) : r?.lift ? ' · Turbolift' : '');
   } }
+  drawRadar(); if (bigmap.style.display === 'block') drawBigMap();
   if (!NORENDER) renderer.render(scene, camera);
+}
+
+// ---------- radar and map ----------
+// A small round radar (top right) centred on you, nose of the ship up; tap it for the whole deck with your arrow.
+const radar = $('radar'), rg = radar.getContext('2d'), bigmap = $('bigmap'), mapc = $('mapc'), mg = mapc.getContext('2d');
+const deckRooms = () => plan.rooms.filter(r => r.deck === player.deck);
+function drawPlan(g, toPx, rooms, lw) {
+  for (const r of rooms) {
+    g.beginPath(); r.poly.forEach((q, i) => { const [x, y] = toPx(q[0], q[1]); i ? g.lineTo(x, y) : g.moveTo(x, y) }); g.closePath();
+    g.fillStyle = r.lift ? 'rgba(255,197,107,.35)' : r.name === 'cabin' ? 'rgba(144,224,228,.10)' : 'rgba(144,224,228,.2)'; g.fill();
+    g.lineWidth = lw; g.strokeStyle = r.lift ? 'rgba(255,197,107,.9)' : 'rgba(144,224,228,.75)'; g.stroke();
+  }
+}
+function drawArrow(g, x, y, size) {
+  const fx = -Math.sin(player.yaw), fy = Math.cos(player.yaw), a = Math.atan2(fx, fy);   // 0 = toward the nose (up)
+  g.save(); g.translate(x, y); g.rotate(a); g.beginPath(); g.moveTo(0, -size); g.lineTo(size * 0.62, size * 0.7); g.lineTo(0, size * 0.32); g.lineTo(-size * 0.62, size * 0.7); g.closePath();
+  g.fillStyle = '#fff'; g.shadowColor = '#90e0e4'; g.shadowBlur = size; g.fill(); g.restore();
+}
+function drawDot(g, x, y, r) { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fillStyle = '#ffc56b'; g.fill() }
+function drawRadar() {
+  const W = radar.width, R = W / 2, range = 22, k = R / range, p = player.p;
+  rg.clearRect(0, 0, W, W); rg.save(); rg.beginPath(); rg.arc(R, R, R - 2, 0, Math.PI * 2); rg.clip();
+  const toPx = (x, y) => [R + (x - p[0]) * k, R - (y - p[1]) * k];
+  if (!plan.open) drawPlan(rg, toPx, deckRooms(), 2);
+  else { rg.strokeStyle = 'rgba(144,224,228,.25)'; for (let i = -range; i <= range; i += 5) { const [a] = toPx(Math.round(p[0] / 5) * 5 + i, 0), [, b] = toPx(0, Math.round(p[1] / 5) * 5 + i); rg.beginPath(); rg.moveTo(a, 0); rg.lineTo(a, W); rg.moveTo(0, b); rg.lineTo(W, b); rg.stroke() } }
+  rg.strokeStyle = 'rgba(144,224,228,.3)'; rg.beginPath(); rg.arc(R, R, R * 0.5, 0, Math.PI * 2); rg.stroke();
+  if (judy && judy.deck === player.deck) { const [jx, jy] = toPx(judy.p[0], judy.p[1]); drawDot(rg, jx, jy, 6) }
+  drawArrow(rg, R, R, 13); rg.restore();
+}
+function drawBigMap() {
+  const dpr = Math.min(devicePixelRatio || 1, 2), W = mapc.clientWidth * dpr, H = mapc.clientHeight * dpr;
+  if (mapc.width !== W || mapc.height !== H) { mapc.width = W; mapc.height = H }
+  mg.clearRect(0, 0, W, H);
+  const rooms = plan.open ? [] : deckRooms(), pts = rooms.flatMap(r => r.poly).concat([player.p]);
+  const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
+  let x0 = Math.min(...xs) - 6, x1 = Math.max(...xs) + 6, y0 = Math.min(...ys) - 6, y1 = Math.max(...ys) + 6;
+  if (plan.open) { x0 = player.p[0] - 40; x1 = player.p[0] + 40; y0 = player.p[1] - 40; y1 = player.p[1] + 40 }
+  const pad = 70 * dpr, k = Math.min((W - pad) / (x1 - x0), (H - pad * 1.6) / (y1 - y0)), cx = W / 2 - (x0 + x1) / 2 * k, cy = H / 2 + (y0 + y1) / 2 * k;
+  const toPx = (x, y) => [cx + x * k, cy - y * k];
+  drawPlan(mg, toPx, rooms, 1.5 * dpr);
+  if (judy && judy.deck === player.deck) { const [jx, jy] = toPx(judy.p[0], judy.p[1]); drawDot(mg, jx, jy, 7 * dpr) }
+  const [px, py] = toPx(player.p[0], player.p[1]); drawArrow(mg, px, py, 16 * dpr);
+  $('mapTitle').textContent = SHIP ? ($('where').textContent.split(' · ')[0] || 'Deck') : CFG.name;
+}
+radar.addEventListener('click', () => { bigmap.style.display = 'block'; drawBigMap() });
+$('mapClose').onclick = () => { bigmap.style.display = 'none' };
+bigmap.addEventListener('click', e => { if (e.target === mapc) bigmap.style.display = 'none' });
+
+// ---------- talking while walking ----------
+let talking = false, talk = null, sayTimer = 0;
+const sayEl = $('say');
+function showLine(who, text) {
+  clearTimeout(sayTimer);
+  sayEl.className = 'say' + (who === 'you' ? ' you' : '');
+  sayEl.innerHTML = who === 'her' ? `<b>${(talk?.name || P.name).replace(/[<&>]/g, '')}:</b> ${text.replace(/[<&>]/g, '')}` : who === 'you' ? `You: ${text.replace(/[<&>]/g, '')}` : text.replace(/[<&>]/g, '');
+  sayEl.style.opacity = '1';
+  sayTimer = setTimeout(() => { sayEl.style.opacity = '0' }, who === 'her' ? Math.max(4500, text.length * 70) : 3500);
+}
+const typebar = $('typebar'), typeIn = $('typeIn'), talkBtn = $('talkBtn'), typeBtn = $('typeBtn');
+typeBtn.onclick = () => { const open = typebar.style.display !== 'flex'; typebar.style.display = open ? 'flex' : 'none'; typeBtn.classList.toggle('on', open); if (open) typeIn.focus() };
+typebar.onsubmit = e => {
+  e.preventDefault(); const t = typeIn.value; typeIn.value = '';
+  // the box gets out of the way as soon as you send
+  typebar.style.display = 'none'; typeBtn.classList.remove('on'); typeIn.blur();
+  if (t.trim()) talk?.ask(t);
+};
+talkBtn.onclick = () => {
+  if (!talk) return;
+  if (!talk.canListen) return showLine('note', 'This browser cannot listen. Use Type instead.');
+  const on = !talkBtn.classList.contains('on');
+  const now = talk.setHands(on, off => { talkBtn.classList.toggle('on', off); talkBtn.classList.toggle('listen', off) });
+  talkBtn.classList.toggle('on', now); talkBtn.classList.toggle('listen', now);
+  showLine('note', now ? `Hands-free on. Just talk to ${talk.name}.` : 'Hands-free off.');
+};
+async function startTalk() {
+  const sc = SHIP ? { name: CFG.name === 'Walk the ship' ? 'The starship' : CFG.name, details: 'Decks 4 to 6 of a starship: crew corridors and cabins, a mess hall, a holodeck, a science lab, and turbolifts between the decks. You are walking it together.' } : { name: CFG.name, details: 'A 3D place you are walking around together.' };
+  talk = await createTalk({ sessionId: params.get('session'), partnerName: P.name, sceneName: sc.name, sceneDetails: sc.details, onSpeaking: on => { talking = on; judyClip = null }, onLine: showLine });
+  if (!talk.ready) showLine('note', 'The AI brain is not connected yet, so she cannot answer here.');
 }
 
 // ---------- start ----------
@@ -409,6 +491,7 @@ placeDoors(); placeCamera();
 requestAnimationFrame(frame);
 const go = $('go'); go.disabled = false; go.textContent = 'Start walking';
 go.onclick = () => {
+  startTalk();
   try { actx = new (window.AudioContext || window.webkitAudioContext)(); loadSteps() } catch { }
   for (const c of Object.values(clips)) c.v.play().then(() => { judyClip = null }).catch(() => { });
   $('start').style.display = 'none'; started = true;

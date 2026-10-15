@@ -10,13 +10,13 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 .back{color:var(--text);text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px}
 .where{margin-left:auto;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;color:var(--cyan);font-weight:600}
 #stick{position:fixed;left:0;bottom:0;width:50%;height:55%}
-.knob{position:fixed;left:calc(max(22px,env(safe-area-inset-left)) + 66px);bottom:calc(max(26px,env(safe-area-inset-bottom)) + 66px);width:132px;height:132px;margin:0 0 -66px -66px;border-radius:50%;border:2px solid rgba(232,236,245,.4);background:rgba(16,20,34,.45);pointer-events:none;box-shadow:inset 0 0 0 10px rgba(232,236,245,.04)}
-.knob::before,.knob::after{content:'';position:absolute;left:50%;top:50%;border:7px solid transparent;opacity:.55}
+.knob{position:fixed;left:calc(max(22px,env(safe-area-inset-left)) + 66px);bottom:calc(max(26px,env(safe-area-inset-bottom)) + 66px);width:132px;height:132px;margin:0 0 -66px -66px;border-radius:50%;border:3px solid rgba(255,255,255,.95);background:rgba(255,255,255,.16);pointer-events:none;box-shadow:0 0 18px rgba(144,224,228,.55),inset 0 0 0 10px rgba(255,255,255,.08)}
+.knob::before,.knob::after{content:'';position:absolute;left:50%;top:50%;border:7px solid transparent;opacity:.95}
 .knob::before{margin:-62px 0 0 -7px;border-bottom-color:#e8ecf5}
 .knob::after{margin:48px 0 0 -7px;border-top-color:#e8ecf5}
-.knob b{position:absolute;top:50%;margin-top:-7px;border:7px solid transparent;opacity:.55}
+.knob b{position:absolute;top:50%;margin-top:-7px;border:7px solid transparent;opacity:.95}
 .knob b.l{left:2px;border-right-color:#e8ecf5}.knob b.r{right:2px;border-left-color:#e8ecf5}
-.knob i{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:rgba(232,236,245,.6);box-shadow:0 4px 14px rgba(0,0,0,.4);transition:transform .08s}
+.knob i{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:#fff;box-shadow:0 0 16px rgba(144,224,228,.8),0 4px 14px rgba(0,0,0,.35);transition:transform .08s}
 .knob.on i{transition:none}
 .hint{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:max(26px,env(safe-area-inset-bottom));max-width:min(46vw,260px);text-align:right;font-size:13px;line-height:1.35;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 12px;pointer-events:none;transition:opacity .6s}
 .call,.panel{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(max(26px,env(safe-area-inset-bottom)) + 96px);display:none}
@@ -34,14 +34,34 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 .start button{margin-top:8px;border:0;border-radius:999px;padding:14px 28px;background:var(--text);color:#0b0e19;font-weight:700;font-size:17px}
 .start button:disabled{opacity:.5}
 .fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .45s}
+.row2{position:fixed;left:0;right:0;top:calc(max(10px,env(safe-area-inset-top)) + 50px);display:flex;align-items:flex-start;gap:8px;padding:0 14px;pointer-events:none}
+.row2 button{pointer-events:auto}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;padding:9px 14px;font-size:14px;font-weight:600}
+.chip.on{background:var(--cyan);color:#06222a;border-color:var(--cyan);box-shadow:0 0 14px rgba(144,224,228,.6)}
+.chip.listen{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(144,224,228,.25)}}
+#radar{margin-left:auto;width:104px;height:104px;border-radius:50%;pointer-events:auto;border:2px solid rgba(144,224,228,.75);background:rgba(10,14,26,.72);box-shadow:0 4px 16px rgba(0,0,0,.35)}
+.typebar{position:fixed;left:14px;right:132px;top:calc(max(10px,env(safe-area-inset-top)) + 100px);display:none;gap:8px}
+.typebar input{flex:1;min-width:0;border:1px solid var(--cyan);background:rgba(10,14,26,.92);color:var(--text);border-radius:14px;padding:12px 14px;font-size:16px}
+.typebar button{border:0;border-radius:14px;padding:0 16px;background:var(--cyan);color:#06222a;font-weight:700;font-size:15px}
+.say{position:fixed;left:50%;top:calc(max(10px,env(safe-area-inset-top)) + 172px);transform:translateX(-50%);width:min(88vw,520px);text-align:center;font-size:16px;line-height:1.4;color:#fff;text-shadow:0 1px 3px #000,0 0 10px #000;pointer-events:none;opacity:0;transition:opacity .35s}
+.say b{color:var(--cyan)}.say.you{color:#d8dcef;font-size:14px}
+.bigmap{position:fixed;inset:0;display:none;background:rgba(6,9,18,.94);z-index:5}
+.bigmap canvas{width:100%;height:100%;display:block}
+.bigmap .title{position:absolute;left:0;right:0;top:max(16px,env(safe-area-inset-top));text-align:center;font-weight:700;letter-spacing:.08em;color:var(--cyan)}
+.bigmap .close{position:absolute;right:16px;top:max(12px,env(safe-area-inset-top));border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;width:42px;height:42px;font-size:20px}
 </style></head><body>
 <canvas id="view"></canvas>
 <div id="stick"></div><div class="knob" id="knob"><i></i><b class="l"></b><b class="r"></b></div>
 <div class="hud"><a class="back" href="./">← My Echo Vision</a><span class="where" id="where">Deck 5</span></div>
+<div class="row2"><button class="chip" id="talkBtn">🎙 Talk</button><button class="chip" id="typeBtn">⌨ Type</button><canvas id="radar" width="208" height="208" aria-label="Map"></canvas></div>
+<form class="typebar" id="typebar" autocomplete="off"><input id="typeIn" placeholder="Say something…" enterkeyhint="send"><button>Send</button></form>
+<div class="say" id="say"></div>
+<div class="bigmap" id="bigmap"><canvas id="mapc"></canvas><div class="title" id="mapTitle">Deck 5</div><button class="close" id="mapClose" aria-label="Close map">×</button></div>
 <div class="hint" id="hint">Stick: walk and turn.<br>Drag on the right to look up.</div>
 <button class="call" id="call">Call lift</button>
 <div class="panel" id="panel"><h3>Turbolift</h3><div id="floors"></div></div>
 <div class="fade" id="fade"></div>
 <div class="start" id="start"><h1>Walk the ship</h1><p>Judy walks with you. Doors open as you reach them. Step into a lift and choose a deck.</p><button id="go" disabled>Loading the ship…</button></div>
-<script type="module" src="ship.mjs?v=7"></script>
+<script type="module" src="ship.mjs?v=8"></script>
 </body></html>
