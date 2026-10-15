@@ -13,7 +13,7 @@ export async function reply(ctx,size,onText=()=>{}){if(busy)throw Error('Still t
 // ---- Fast brain: any OpenAI-compatible chat service (a hosted model, a small proxy, or your own computer).
 // The key lives only in this browser's storage. It is never part of the app's code or its saved studio data.
 const KEY='echo-vision-brain-key';
-export const PRESETS=[{name:'Grok (xAI)',url:'https://api.x.ai/v1'},{name:'Groq',url:'https://api.groq.com/openai/v1'},{name:'OpenRouter',url:'https://openrouter.ai/api/v1'},{name:'My own server or computer',url:''}];
+export const PRESETS=[{name:'OpenAI GPT',url:'https://api.openai.com/v1'},{name:'Grok (xAI)',url:'https://api.x.ai/v1'},{name:'Groq',url:'https://api.groq.com/openai/v1'},{name:'OpenRouter',url:'https://openrouter.ai/api/v1'},{name:'My own server or computer',url:''}];
 export function remoteKey(){try{return localStorage.getItem(KEY)||''}catch{return ''}}
 export function setRemoteKey(k){try{k?localStorage.setItem(KEY,k):localStorage.removeItem(KEY)}catch{}}
 const base=u=>String(u||'').trim().replace(/\/+$/,''),auth=()=>remoteKey()?{Authorization:'Bearer '+remoteKey()}:{};
