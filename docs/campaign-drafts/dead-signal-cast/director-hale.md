@@ -20,37 +20,37 @@ Use THIS picture as the start image for every clip below.
 
 Use the provided image as the exact first frame and the exact last frame.
 The character stays in place: same framing, same position, same size, same lighting, same clothing. Fixed camera, no zoom, no cuts. Plain solid green background that never changes, evenly lit, with no shadows on it. No text and nothing entering the frame.
-She begins in the neutral pose, performs the action below, and returns to the identical neutral pose by the end, so the clip loops seamlessly.
+He begins in the neutral pose, performs the action below, and returns to the identical neutral pose by the end, so the clip loops seamlessly.
 Length: 8 to 10 seconds. Vertical portrait, 2:3, the same shape as the picture. No sound needed.
 
-ACTION: She stands relaxed, breathing gently, blinks naturally and shifts her weight very slightly. Calm neutral face. No speaking.
+ACTION: He stands relaxed, breathing gently, blinks naturally and shifts his weight very slightly. Calm neutral face. No speaking.
 
 ## 3. Talking
 
 Use the provided image as the exact first frame and the exact last frame.
 The character stays in place: same framing, same position, same size, same lighting, same clothing. Fixed camera, no zoom, no cuts. Plain solid green background that never changes, evenly lit, with no shadows on it. No text and nothing entering the frame.
-She begins in the neutral pose, performs the action below, and returns to the identical neutral pose by the end, so the clip loops seamlessly.
+He begins in the neutral pose, performs the action below, and returns to the identical neutral pose by the end, so the clip loops seamlessly.
 Length: 6 to 8 seconds. Vertical portrait, 2:3, the same shape as the picture. No sound needed.
 
-ACTION: She speaks casually to the camera as if chatting with a friend, mouth moving through varied natural words, with small head movements and light hand gestures. Neutral, friendly expression.
+ACTION: He speaks casually to the camera as if chatting with a friend, mouth moving through varied natural words, with small head movements and light hand gestures. Neutral, friendly expression.
 
 ## 4. Happy
 
 Use the provided image as the exact first frame and the exact last frame.
 The character stays in place: same framing, same position, same size, same lighting, same clothing. Fixed camera, no zoom, no cuts. Plain solid green background that never changes, evenly lit, with no shadows on it. No text and nothing entering the frame.
-She begins in the neutral pose, performs the action below, and returns to the identical neutral pose by the end, so the clip loops seamlessly.
+He begins in the neutral pose, performs the action below, and returns to the identical neutral pose by the end, so the clip loops seamlessly.
 Length: 4 to 5 seconds. Vertical portrait, 2:3, the same shape as the picture. No sound needed.
 
-ACTION: Her face lights up into a warm genuine smile, her eyes brighten, and she gives a small delighted head tilt.
+ACTION: His face lights up into a warm genuine smile, his eyes brighten, and he gives a small delighted head tilt.
 
 ## 5. Angry
 
 Use the provided image as the exact first frame and the exact last frame.
 The character stays in place: same framing, same position, same size, same lighting, same clothing. Fixed camera, no zoom, no cuts. Plain solid green background that never changes, evenly lit, with no shadows on it. No text and nothing entering the frame.
-She begins in the neutral pose, performs the action below, and returns to the identical neutral pose by the end, so the clip loops seamlessly.
+He begins in the neutral pose, performs the action below, and returns to the identical neutral pose by the end, so the clip loops seamlessly.
 Length: 4 to 5 seconds. Vertical portrait, 2:3, the same shape as the picture. No sound needed.
 
-ACTION: Her brows draw together, her jaw sets, and she gives a firm glare with a short sharp exhale.
+ACTION: His brows draw together, his jaw sets, and he gives a firm glare with a short sharp exhale.
 
 ## 6. Voice clip (~10 s, with sound)
 

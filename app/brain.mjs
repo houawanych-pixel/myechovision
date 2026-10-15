@@ -1,6 +1,6 @@
 // On-device character "brain" (test). Runs a small open language model in the browser with WebLLM
 // (see vendor/web-llm/NOTICE.md). Needs WebGPU. Nothing typed is sent to a server.
-import {brainPrompt,parseReply} from './core.mjs?v=19';
+import {brainPrompt,parseReply} from './core.mjs?v=20';
 import * as vault from './vault.mjs?v=1';
 export const MODELS={small:{label:'Small',size:'about 0.7 GB',base:'Llama-3.2-1B-Instruct'},large:{label:'Larger',size:'about 1.8 GB',base:'Llama-3.2-3B-Instruct'}};
 let engine=null,loadedId=null,loading=null,busy=false,statusFn=()=>{};

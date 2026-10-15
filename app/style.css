@@ -113,3 +113,23 @@ body.call:not(.showChips) .chips{display:none}#callHome{font-size:20px;line-heig
 .partySlot .stageFg>*{object-fit:contain!important;object-position:50% 100%!important}
 #guideBot .stageBg{display:none}#guideBot .stageFg{position:absolute;inset:0;transform:none}#guideBot .stageFg>*{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 100%}
 #guideBot:not(.standin) .gbCore{width:16px;height:16px;margin-left:-8px;border:1px solid #dff8ffaa;background:radial-gradient(circle,#ffffffd0 0,#7fe3ff80 45%,transparent 75%)}#guideBot:not(.standin).live .gbCore{background:radial-gradient(circle,#fff 0,#ff7a7fcc 45%,transparent 80%)}#guideBot:not(.standin) .gbHolo{opacity:.85;background:none}
+/* Guide v2: upper body only, tap her to talk, drag to move, mic badge in front / red mic ring behind while listening */
+#guideBot{width:100px}
+#guideBot .gbHolo{pointer-events:auto;height:104px;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;z-index:1}
+#guideBot:not(.standin) .gbStage{border-radius:14px 14px 40% 40%/14px 14px 22px 22px}
+#guideBot .stageFg{inset:auto 0 auto 0;top:0;height:154%}
+#guideBot .stageFg>*{object-position:50% 0}
+#guideBot:not(.standin) .gbCore{display:none}
+#guideBot .gbCore{pointer-events:none}
+#guideBot .gbMic{position:absolute;left:50%;bottom:-6px;width:28px;height:28px;margin-left:-14px;border-radius:50%;display:grid;place-items:center;color:#fff;background:radial-gradient(circle at 50% 35%,#4fc3ff,#1769c9);border:1.5px solid #dff8ff;box-shadow:0 0 10px 2px #6cd3ffaa;transition:transform .3s,opacity .3s;animation:gbMicPulse 2.2s ease-in-out infinite;z-index:2}
+#guideBot .gbMic svg{width:16px;height:16px}
+#guideBot .gbRing{position:absolute;left:50%;top:54px;width:118px;height:118px;margin:-59px 0 0 -59px;border-radius:50%;display:grid;place-items:center;color:#ffffff40;background:radial-gradient(circle,#e5484d55 0,#e5484d99 60%,#ff6b6fcc 100%);border:2px solid #ff9a9d;box-shadow:0 0 24px 6px #e5484d88;transform:translateY(52px) scale(.24);opacity:0;transition:transform .35s cubic-bezier(.3,1.4,.5,1),opacity .25s;pointer-events:none;z-index:0}
+#guideBot .gbRing svg{width:64px;height:64px}
+#guideBot.live .gbRing{transform:none;opacity:1;animation:gbRing 1.6s ease-in-out .35s infinite}
+#guideBot.live .gbMic{transform:scale(.2);opacity:0;animation:none}
+#guideBot .gbLabel{position:relative;z-index:1;margin-top:8px}
+#guideBot .gbHide{z-index:3}
+#guideBot.moved{right:auto;bottom:auto;transition:none}
+#modal #guideBot.moved{position:fixed;float:none;margin:0}
+@keyframes gbMicPulse{0%,100%{box-shadow:0 0 8px 2px #6cd3ff88}50%{box-shadow:0 0 16px 5px #6cd3ffdd}}
+@keyframes gbRing{0%,100%{box-shadow:0 0 18px 4px #e5484d77}50%{box-shadow:0 0 32px 10px #e5484dbb}}
