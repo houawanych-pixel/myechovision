@@ -41,11 +41,16 @@ async function loadConfig() {
     name: c.name || 'Your companion', chroma: c.chroma || 'none', spill: c.spill ?? 0.8, rigged: !!c.rigged, cut: !!c.chroma && c.chroma !== 'none',
     model: (await mediaOf(c.model))?.url || '', still: await mediaOf(c.image), normal: await mediaOf(c.clips?.normal || c.loop), walk: await mediaOf(c.clips?.walkLoop || c.clips?.walk), walkSound: (await mediaOf(c.walkSound))?.url || '', talk: await mediaOf(c.clips?.talking)
   };
-  return { world: !scene.world || scene.world === 'ship' ? 'ship' : (await mediaOf(scene.world))?.url || 'ship', name: scene.name || 'Your world', partner };
+  const extras = [];
+  for (const id of (sess.party || []).filter(x => x !== sess.partner && x !== sess.player).slice(0, 2)) {
+    const m = st.cast.find(x => x.id === id); if (!m) continue;
+    extras.push({ name: m.name, chroma: m.chroma || 'none', spill: m.spill ?? 0.8, still: await mediaOf(m.image), normal: await mediaOf(m.clips?.normal || m.loop), walk: await mediaOf(m.clips?.walkLoop || m.clips?.walk) });
+  }
+  return { world: !scene.world || scene.world === 'ship' ? 'ship' : (await mediaOf(scene.world))?.url || 'ship', name: scene.name || 'Your world', partner, extras };
 }
 const CFG = await loadConfig(), P = CFG.partner, SHIP = CFG.world === 'ship';
 document.querySelector('.start h1').textContent = CFG.name;
-document.querySelector('.start p').textContent = SHIP ? `${P.name} walks with you. Doors open as you reach them. Step into a lift and choose a deck.` : `${P.name} walks with you. Use the stick to walk and turn.`;
+document.querySelector('.start p').textContent = SHIP ? `${[P.name, ...(CFG.extras || []).map(x => x.name)].join(' and ')} ${(CFG.extras || []).length ? 'walk' : 'walks'} with you. Doors open as you reach them. Step into a lift and choose a deck.` : `${P.name} walks with you. Use the stick to walk and turn.`;
 const ROOM_NAMES = { messhall: 'Mess hall', fcorr: 'Forward corridor', neck: 'Corridor', corridor: 'Crew corridor', corridor4: 'Crew corridor', aftneck: 'Corridor', aftcorr: 'Aft corridor', aftcorr4: 'Aft corridor', armory: 'Armory', brig: 'Brig', ecorr: 'Engineering hall', d6corr: 'Corridor', holodeck: 'Holodeck', gym: 'Gym', cargo: 'Cargo bay', crewlounge: 'Crew lounge', sickbay: 'Sickbay', transporter: 'Transporter room', d3corr: 'Corridor', sciencelab: 'Science lab', hydroponics: 'Hydroponics', cabin: 'Crew cabin' };
 const DECK_OF_ROOM = { sickbay: 'Deck 3', transporter: 'Deck 3', d3corr: 'Deck 3', lift_f3: 'Deck 3' };
 const DECK_LABEL = { 31: 'Deck 6', 36: 'Deck 5', 42: 'Deck 4' };
@@ -198,6 +203,28 @@ const JH = 1.75, JW = JH * 400 / 736, TOP = EYE + 0.32;
 const judyMesh = new THREE.Mesh(new THREE.PlaneGeometry(JW, JH), judyMat);
 judyMesh.renderOrder = 10; scene.add(judyMesh);
 function fitBillboard(w, h) { if (w && h) judyMesh.scale.x = (w / h) / (400 / 736) }
+// ---------- the rest of the party ----------
+// Up to two more people follow you too. Nobody walks in single file or hides behind someone else: the first two
+// walk side by side (one a little left, one a little right of your path) and a third trails further back in the
+// middle, so you see all of them when you look back. Each has their own billboard and clips.
+const EXTRAS = (CFG.extras || []).map((X, i) => {
+  const xc = {}; if (X.normal?.video) xc.normal = videoClip(X.normal.url); if (X.walk?.video) xc.walk = videoClip(X.walk.url);
+  const xsrc = X.still?.url || (X.normal && !X.normal.video ? X.normal.url : '');
+  const xstill = xsrc ? new THREE.TextureLoader().load(xsrc) : blank; xstill.colorSpace = THREE.NoColorSpace;
+  const mat = new THREE.ShaderMaterial({ uniforms: { map: { value: xstill }, spill: { value: X.spill ?? 0.8 }, light: { value: 1.0 }, key: { value: X.chroma === 'blue' ? 2 : X.chroma === 'green' ? 1 : 0 }, fadeBottom: { value: 0.3 } }, vertexShader: KEY_VS, fragmentShader: KEY_FS, transparent: true, depthWrite: false });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(JW, JH), mat); mesh.renderOrder = 9 - i; scene.add(mesh);
+  for (const c of Object.values(xc)) c.v.addEventListener('loadedmetadata', () => { if (c.v.videoWidth) mesh.scale.x = (c.v.videoWidth / c.v.videoHeight) / (400 / 736) }, { once: true });
+  return { X, clips: xc, still: xstill, mat, mesh, f: null, lane: i === 0 ? 0.55 : 0, gap: i === 0 ? 1.45 : 2.7, off: [0, 0], shown: null };
+});
+const JUDY_LANE = EXTRAS.length ? -0.55 : 0;
+// A sideways nudge across the path to the player, eased, and only where there is floor for it.
+function laneOffset(f, lane, off, dt) {
+  let t = [0, 0];
+  if (lane) { const dx = player.p[0] - f.p[0], dy = player.p[1] - f.p[1], d = Math.hypot(dx, dy) || 1, q = [f.p[0] - dy / d * lane, f.p[1] + dx / d * lane]; if (walkable(plan, q, f.deck, 0.2)) t = [q[0] - f.p[0], q[1] - f.p[1]] }
+  const k = Math.min(1, dt * 3); off[0] += (t[0] - off[0]) * k; off[1] += (t[1] - off[1]) * k; return off;
+}
+const judyOff = [0, 0];
+function extraClip(e, name) { if (e.shown === name) return; e.shown = name; const c = e.clips[name], playing = c && c.v.readyState >= 2 && !c.v.paused; e.mat.uniforms.map.value = playing ? c.tex : (name === 'walk' && e.clips.normal && e.clips.normal.v.readyState >= 2 && !e.clips.normal.v.paused) ? e.clips.normal.tex : e.still }
 // a 3D companion instead of a billboard: scaled to 1.7 m; rigged models play walk and idle animations
 let model = null, mixer = null, acts = {}, actNow = null;
 if (P.model) {
@@ -356,6 +383,7 @@ async function ride(lift, to) {
   // arrive: you and Judy are carried to the same spot on the new deck
   player.deck = to; player.floor = to; lift.at = to; lift.moving = false;
   placeFollower(judy, [lift.x + (lift.x > player.p[0] ? 0.6 : -0.6), lift.y + 0.7], to);
+  EXTRAS.forEach((e, i) => e.f && placeFollower(e.f, [lift.x + (i ? 0 : (lift.x > player.p[0] ? -0.6 : 0.6)), lift.y + 0.9 + i * 0.4], to));
   fade.style.opacity = '0'; lift.hold = false;
   lift.forceOpen = to; setTimeout(() => { if (lift.forceOpen === to) lift.forceOpen = null }, 2500);
   hiss(0.06); riding = false; renderPanel(lift);
@@ -399,9 +427,16 @@ function frame(now) {
     recordTrail(judy, player.p, player.deck);
   } else player.vel = [0, 0];
   if (judy) { stepFollower(judy, plan, player, dt); if (started) footsteps() }
+  for (const e of EXTRAS) {
+    if (!e.f) continue; recordTrail(e.f, player.p, player.deck); stepFollower(e.f, plan, player, dt);
+    const o = laneOffset(e.f, e.lane, e.off, dt), ef = SHIP ? floorAt(plan, e.f.p, e.f.deck) : (groundAt(e.f.p, player.floor + 1.2) ?? player.floor);
+    e.mesh.visible = e.f.deck === player.deck; e.mesh.position.copy(V(e.f.p[0] + o[0], e.f.p[1] + o[1], ef + TOP - JH / 2));
+    e.mesh.rotation.set(0, Math.atan2(camera.position.x - e.mesh.position.x, camera.position.z - e.mesh.position.z), 0);
+    extraClip(e, e.f.moving ? 'walk' : 'normal');
+  }
   // doors: you and Judy both open them
   const before = plan.doors.map(d => d.open > 0.02);
-  updateDoors(plan, [player, judy].filter(Boolean), dt);
+  updateDoors(plan, [player, judy, ...EXTRAS.map(e => e.f)].filter(Boolean), dt);
   plan.doors.forEach((d, i) => { if (!before[i] && d.open > 0.02 && Math.hypot(d.x - player.p[0], d.y - player.p[1]) < 12 && d.deck === player.deck) hiss() });
   placeDoors();
   // lift buttons: "Call lift" outside a lift door, the deck panel inside the car
@@ -418,7 +453,7 @@ function frame(now) {
     modelAnim(judy.moving ? 'walk' : 'idle'); mixer?.update(dt);
   } else {
     judyMesh.visible = judy.deck === player.deck;
-    judyMesh.position.copy(V(judy.p[0], judy.p[1], jf + TOP - JH / 2));
+    const jo = laneOffset(judy, JUDY_LANE, judyOff, dt); judyMesh.position.copy(V(judy.p[0] + jo[0], judy.p[1] + jo[1], jf + TOP - JH / 2));
     judyMesh.rotation.set(0, Math.atan2(camera.position.x - judyMesh.position.x, camera.position.z - judyMesh.position.z), 0);
     const away = judy.moving && ((judy.p[0] - player.p[0]) * judy.vel[0] + (judy.p[1] - player.p[1]) * judy.vel[1]) > 0.3;
     showClip(talking && clips.talk ? 'talk' : (P.walkSound ? judy.moving : away) ? 'walk' : 'normal');
@@ -527,6 +562,7 @@ judy = createFollower([player.p[0] + Math.sin(player.yaw) * 1.2, player.p[1] - M
 if (!walkable(plan, judy.p, judy.deck)) placeFollower(judy, player.p, player.deck);
 judy.floor = player.floor;
 judy.trail = [[...player.p]];
+for (const e of EXTRAS) { e.f = createFollower([...judy.p], player.deck, { gap: e.gap, near: e.gap - 0.4 }); e.f.trail = [[...player.p]] }
 placeDoors(); placeCamera();
 requestAnimationFrame(frame);
 const go = $('go'); go.disabled = false; go.textContent = 'Start walking';
@@ -534,8 +570,9 @@ go.onclick = () => {
   startTalk();
   try { actx = new (window.AudioContext || window.webkitAudioContext)(); loadSteps(); loadHerWalk() } catch { }
   for (const c of Object.values(clips)) c.v.play().then(() => { judyClip = null }).catch(() => { });
+  for (const e of EXTRAS) for (const c of Object.values(e.clips)) c.v.play().then(() => { e.shown = null }).catch(() => { });
   $('start').style.display = 'none'; started = true;
 };
 if (params.has('autostart')) go.onclick();
 // for checks: window.ship exposes the live state
-window.ship = { plan, player, get judy() { return judy }, ride, camera, renderer, snap() { placeDoors(); placeCamera(); renderer.render(scene, camera); return canvas.toDataURL('image/jpeg', 0.85) } };
+window.ship = { plan, player, get judy() { return judy }, get party() { return EXTRAS.map(e => e.f && { p: e.f.p, off: e.off, moving: e.f.moving, visible: e.mesh.visible }) }, ride, camera, renderer, snap() { placeDoors(); placeCamera(); renderer.render(scene, camera); return canvas.toDataURL('image/jpeg', 0.85) } };
