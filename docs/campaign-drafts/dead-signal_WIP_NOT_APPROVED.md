@@ -36,9 +36,11 @@ Memory fragments are marked **[M1]…[M5]**. Each returns in pieces, as a flash 
    **[M3]** You know this alarm. You know the way to the lower labs without a map.
 6. **The labs.** Logs show the species being bred and studied. You find Mira hiding in the ducts.
    **[M4]** You worked here. You were the one who tried to get the test subjects out, and they caught you.
-7. **The twist.** Director Hale comes on comms: the crew's "job" was posted by the company — to bring back
-   anything alive, including you. **[M5]** You weren't drifting by accident. You escaped this place, and your
-   own SOS led everyone straight back into it. Trust breaks: who knew? Kara didn't. Did Sera?
+7. **The twist.** **[M5]** It all comes back: you weren't drifting by accident. You escaped *this* station,
+   and the company behind it, and you have been carried straight back to the one place you ran from.
+   Director Hale comes on comms and knows your name. The station's "job" the crew answered was bait from
+   the company to bring back anything alive. The crew had no idea; they're on your side, and now they're
+   targets too.
 8. **Losses and the last stand.** The hunt closes in; the crew is cut down to the few who matter. Unit Seven
    holds a door and is torn in half — and still talks you through the escape route.
 9. **Go back.** At the shuttle, safe, you realize Mira was taken below. Everyone says leave. You go back.
@@ -46,8 +48,8 @@ Memory fragments are marked **[M1]…[M5]**. Each returns in pieces, as a flash 
     choose what happens to the station and the proof of what Hale built.
 
 ## Notes
-- Twist (corrected from the first draft): the crew that rescues you is **not** who you fled. The **station
-  and the company behind it** are. The crew was hired, unknowingly, to bring you back.
+- Twist: the crew that finds you is **not** the threat and never was. The **destination** — the station and
+  the company behind it — is what you fled. The horror is where you're going, not who saved you.
 - Group reactions: one surprised, one scared, one calm (Sera) — same sound, different people.
 - Sound: booms and wall-skittering start at checkpoint 3 and build; music turns scary, then epic chase at 5.
 - To play it now: Create → Your story → paste checkpoint 0 as the Beginning, 1–9 as chapters, 10 as the
