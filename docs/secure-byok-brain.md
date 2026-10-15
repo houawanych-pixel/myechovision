@@ -1,6 +1,26 @@
 # Echo Vision: secure bring-your-own-key brain integration
 
-Status: **design / implementation checklist, not deployed.** Do not ask users to enter paid API keys into the current browser-only key field until the secure flow is launched and tested.
+Status: **built and tested locally (2026-10-15); waiting for deployment.** The app shows "Secure key connection is coming soon" and takes no keys until `app/vault.json` points at the deployed vault. The old browser key field is gone; a key saved there before is only read for people who already had one, and the panel offers to remove it.
+
+## What was built
+
+- `worker/vault.js`: Cloudflare Worker. Passkey sign-in (WebAuthn, verified with WebCrypto: challenge, origin, RP ID hash, user presence + verification, ES256/RS256 signature, sign counter). Session = random 256-bit token, stored only as a SHA-256 hash, 30 days, sent as `Authorization: Bearer` (no cookies, so no CSRF). Keys are checked against the provider, then sealed with AES-256-GCM (fresh 96-bit nonce, `user|provider|version` as associated data, so a record copied to another account cannot be opened) using `VAULT_KEY` (a Worker secret). Keys are never returned, logged or put in URLs; provider error text is scrubbed of anything key-shaped.
+- OpenAI-compatible endpoints for the app's brain: `GET /v1/:provider/models`, `POST /v1/:provider/chat/completions` (streaming passes straight through). Provider + model allowlists, `max_tokens` capped at 2000, 80 messages / 40k characters / 2 MB per request, 60 s timeout, 20 requests a minute and 600 a day per person, 30 sign-in attempts a minute per IP, usage counted per day.
+- Clear errors for a wrong/expired/revoked key, no credit or billing, provider rate limits, missing models, expired sign-in.
+- Account endpoints: status (never the key), connect/replace, disconnect, sign out, delete account (removes passkeys, sessions, keys, usage).
+- `worker/vault-schema.sql`, `worker/wrangler.vault.toml`.
+- `app/vault.mjs` + the AI brain panel in `app/app.js` (Chat → ⚙ → brain → Change, or Create → step 4 → AI brain): built-in brain; "Your own AI account" (passkey sign-in, service, key page link, hidden key field with Show/Hide, Connect and test, status, model, Use this brain, Disconnect, Sign out); advanced: own server with no key, or on-device brain. `app/brain.mjs` sends the vault sign-in token only to the vault's address, never anywhere else.
+- Tests: `tests/vault.test.mjs` (9 security checks: other sites refused, forged/replayed/other-site/no-fingerprint passkeys refused, unsigned requests refused everywhere, key never in responses or in the database in plain text, cross-account isolation, copied ciphertext cannot be opened, wrong key, no credit, rate limit, daily cap, sign-out, expired session, delete account, missing secret). A browser run with a virtual passkey checked the whole panel: create sign-in, wrong key error, connect, the key is not in browser storage, a reply streams through the vault, sign in again on a fresh page.
+
+## Deploy (owner's agent; needs the Cloudflare account)
+
+```
+npx wrangler d1 create echo-vault                       # copy database_id into worker/wrangler.vault.toml
+npx wrangler d1 execute echo-vault --remote --file=worker/vault-schema.sql
+openssl rand -base64 32 | npx wrangler secret put VAULT_KEY --config worker/wrangler.vault.toml
+npx wrangler deploy --config worker/wrangler.vault.toml
+```
+Then put the Worker address in `app/vault.json` (`{"url":"https://echo-vault.<account>.workers.dev"}`), bump `app.js?v=` in `app/index.html`, push, and test on the live site. Keep `VAULT_KEY` safe: losing it means everyone reconnects their key; leaking it together with the database exposes keys. Never commit it.
 
 ## Existing implementation reviewed (2026-10-15)
 

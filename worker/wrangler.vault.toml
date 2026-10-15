@@ -1,0 +1,15 @@
+# Cloudflare config for the My Echo Vision key vault (worker/vault.js).
+# Deploy:  npx wrangler deploy --config worker/wrangler.vault.toml
+# Secrets are set separately and never written here:  npx wrangler secret put VAULT_KEY --config worker/wrangler.vault.toml
+name = "echo-vault"
+main = "vault.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+RP_ID = "myechovision.com"
+ORIGINS = "https://myechovision.com,https://www.myechovision.com"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "echo-vault"
+database_id = "REPLACE_WITH_ID_FROM_wrangler_d1_create"
