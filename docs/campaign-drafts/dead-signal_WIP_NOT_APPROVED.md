@@ -30,8 +30,12 @@ Memory fragments are marked **[M1]…[M5]**. Each returns in pieces, as a flash 
    read it before.
 3. **Dead station.** Docking. No lights, no people, doors sealed. Sounds start: slow booms deep inside,
    something skittering through the walls. The crew hears it too ("Did you hear that?").
-4. **Locked out.** Every route to the bridge is sealed. Unit Seven crawls the vents alone to open them from
-   the other side — where the skittering lives. It makes it. First respect earned.
+4. **Locked out — the vents.** You push toward the bridge to pull up the station's systems, map and logs, but
+   every door between you and it is sealed. Progress is slow; you never see the threat, you only hear it — the
+   booming, then skittering in the walls, closer each time. No way through for the crew, so Unit Seven goes into
+   the vents alone to open the doors from the other side: into the same ducts the skittering comes from. You
+   hear it crawling, its voice on comms, the sounds getting closer to it… then the first door hisses open. It
+   made it. Kara says nothing, but she stops watching it like a threat. The start of its redemption.
 5. **Power on — the domino.** The station is dark and dead: no lights, sealed doors, nothing works. To move on
    you have to restore power. On the bridge, Rook gets the main breaker up — and one switch unspools everything:
    - the lights come up, flickering, deck by deck;
