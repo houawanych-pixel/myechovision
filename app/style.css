@@ -84,3 +84,4 @@ main.storyView{max-width:900px}@media(max-width:800px){main.storyView .content{p
 .vHead{font-size:1rem;margin:14px 0 6px}.voiceGuide .vHead{margin-top:2px}#vWordsNote{margin-top:6px}
 .voiceGuide .vOpt{margin:12px 0 4px}.voiceGuide>small{display:block;opacity:.75;margin-top:4px}
 .vOwn{display:flex!important;gap:8px;align-items:flex-start;margin-top:8px}.vOwn input{width:auto;margin-top:3px}
+.guideMute{display:inline-block;margin:-6px 0 10px}
