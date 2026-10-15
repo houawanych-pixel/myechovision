@@ -20,12 +20,13 @@ place you escaped — and someone there is growing something as a weapon.
 ## Checkpoints
 Memory fragments are marked **[M1]…[M5]**. Each returns in pieces, as a flash the narrator reads.
 
-0. **Intro — Found.** Your little ship drifts, beacon crying SOS. You wake in a cold pod as a crew cuts
-   through the hull. You don't know your name. **[M1]** A single image: a white corridor, red light, running.
+0. **Intro — Found.** Your small ship drifts alone, its beacon crying SOS. A bounty-hunter crew answers it.
+   You wake in a cold pod as they cut through the hull. You don't know your name. **[M1]** A single image: a white corridor, red light, running.
 1. **Taken in.** The bounty hunters bring you aboard and give you a place. Kara decides you're crew until
    proven otherwise. Unit Seven checks you over; everyone watches it, not you.
-2. **The second signal.** A station nearby is answering on the same old frequency. The job pays.
-   They head there. You feel sick and don't know why. **[M2]** The station's name on a door sign — you've
+2. **Return to origin.** Rook reads your beacon: the SOS carries a recovery order — *return craft and occupant
+   to point of origin, reward paid on delivery*. A station, not far. The job pays well. They set course.
+   You feel sick and don't know why. **[M2]** The station's name on a door sign — you've
    read it before.
 3. **Dead station.** Docking. No lights, no people, doors sealed. Sounds start: slow booms deep inside,
    something skittering through the walls. The crew hears it too ("Did you hear that?").
@@ -38,8 +39,8 @@ Memory fragments are marked **[M1]…[M5]**. Each returns in pieces, as a flash 
    **[M4]** You worked here. You were the one who tried to get the test subjects out, and they caught you.
 7. **The twist.** **[M5]** It all comes back: you weren't drifting by accident. You escaped *this* station,
    and the company behind it, and you have been carried straight back to the one place you ran from.
-   Director Hale comes on comms and knows your name. The station's "job" the crew answered was bait from
-   the company to bring back anything alive. The crew had no idea; they're on your side, and now they're
+   Director Hale comes on comms and knows your name. Your own SOS was the company's leash: the recovery order
+   on your beacon was written to bring you home. You called for help, and help carried you back into it. The crew had no idea; they're on your side, and now they're
    targets too.
 8. **Losses and the last stand.** The hunt closes in; the crew is cut down to the few who matter. Unit Seven
    holds a door and is torn in half — and still talks you through the escape route.
@@ -48,6 +49,8 @@ Memory fragments are marked **[M1]…[M5]**. Each returns in pieces, as a flash 
     choose what happens to the station and the proof of what Hale built.
 
 ## Notes
+- The gut-punch: your own SOS is what drags everyone back. You called for help, and help is carrying you
+  into the nightmare you fled.
 - Twist: the crew that finds you is **not** the threat and never was. The **destination** — the station and
   the company behind it — is what you fled. The horror is where you're going, not who saved you.
 - Group reactions: one surprised, one scared, one calm (Sera) — same sound, different people.
