@@ -214,13 +214,13 @@ const EXTRAS = (CFG.extras || []).map((X, i) => {
   const mat = new THREE.ShaderMaterial({ uniforms: { map: { value: xstill }, spill: { value: X.spill ?? 0.8 }, light: { value: 1.0 }, key: { value: X.chroma === 'blue' ? 2 : X.chroma === 'green' ? 1 : 0 }, fadeBottom: { value: 0.3 } }, vertexShader: KEY_VS, fragmentShader: KEY_FS, transparent: true, depthWrite: false });
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(JW, JH), mat); mesh.renderOrder = 9 - i; scene.add(mesh);
   for (const c of Object.values(xc)) c.v.addEventListener('loadedmetadata', () => { if (c.v.videoWidth) mesh.scale.x = (c.v.videoWidth / c.v.videoHeight) / (400 / 736) }, { once: true });
-  return { X, clips: xc, still: xstill, mat, mesh, f: null, lane: i === 0 ? 0.55 : 0, gap: i === 0 ? 1.45 : 2.7, off: [0, 0], shown: null };
+  return { X, clips: xc, still: xstill, mat, mesh, f: null, lane: i === 0 ? 0.75 : 0, gap: i === 0 ? 1.45 : 2.7, off: [0, 0], shown: null };
 });
-const JUDY_LANE = EXTRAS.length ? -0.55 : 0;
+const JUDY_LANE = EXTRAS.length ? -0.75 : 0;
 // A sideways nudge across the path to the player, eased, and only where there is floor for it.
 function laneOffset(f, lane, off, dt) {
   let t = [0, 0];
-  if (lane) { const dx = player.p[0] - f.p[0], dy = player.p[1] - f.p[1], d = Math.hypot(dx, dy) || 1, q = [f.p[0] - dy / d * lane, f.p[1] + dx / d * lane]; if (walkable(plan, q, f.deck, 0.2)) t = [q[0] - f.p[0], q[1] - f.p[1]] }
+  if (lane) { const dx = player.p[0] - f.p[0], dy = player.p[1] - f.p[1], d = Math.hypot(dx, dy) || 1; for (const k of [1, 0.7, 0.45]) { const q = [f.p[0] - dy / d * lane * k, f.p[1] + dx / d * lane * k]; if (walkable(plan, q, f.deck, 0.2)) { t = [q[0] - f.p[0], q[1] - f.p[1]]; break } } }
   const k = Math.min(1, dt * 3); off[0] += (t[0] - off[0]) * k; off[1] += (t[1] - off[1]) * k; return off;
 }
 const judyOff = [0, 0];
