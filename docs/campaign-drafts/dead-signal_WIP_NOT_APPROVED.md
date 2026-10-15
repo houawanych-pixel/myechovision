@@ -32,8 +32,14 @@ Memory fragments are marked **[M1]…[M5]**. Each returns in pieces, as a flash 
    something skittering through the walls. The crew hears it too ("Did you hear that?").
 4. **Locked out.** Every route to the bridge is sealed. Unit Seven crawls the vents alone to open them from
    the other side — where the skittering lives. It makes it. First respect earned.
-5. **Power on.** On the bridge, Rook restores power to read the logs. The lights come up… and every door
-   unlocks, both ways. The station wakes. Alarms, a looping company message, the thing starts hunting.
+5. **Power on — the domino.** The station is dark and dead: no lights, sealed doors, nothing works. To move on
+   you have to restore power. On the bridge, Rook gets the main breaker up — and one switch unspools everything:
+   - the lights come up, flickering, deck by deck;
+   - every sealed door unlocks — both ways;
+   - an old alarm starts wailing, and a looped company message plays over it;
+   - the booming stops… then the skittering starts again, moving fast, now that nothing holds it in;
+   - something on the lower decks answers the alarm.
+   You fixed it and made it worse. (In the app: the music turns scary, the scary sounds come on and get closer.)
    **[M3]** You know this alarm. You know the way to the lower labs without a map.
 6. **The labs.** Logs show the species being bred and studied. You find Mira hiding in the ducts.
    **[M4]** You worked here. You were the one who tried to get the test subjects out, and they caught you.
