@@ -2,7 +2,7 @@
 // out loud, with a short subtitle. The brain is the one My Echo Vision uses: this device's own choice, or the
 // site's built-in brain (brain.json, the key-keeping proxy). Lines are added to the story's chat when the walk
 // was opened from a story, so the conversation carries on in chat.
-import { remoteReply } from './brain.mjs?v=17';
+import { remoteReply } from './brain.mjs?v=18';
 
 const KEY = 'echo-vision-studio-v2';
 const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || null } catch { return null } };

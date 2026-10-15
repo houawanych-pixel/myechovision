@@ -105,3 +105,9 @@ main.storyView{max-width:900px}@media(max-width:800px){main.storyView .content{p
 body:has(#guidePanel) #guideBot{bottom:190px}#guideBot{transition:bottom .3s}
 body.call:not(.showChips) .chips{display:none}#callHome{font-size:20px;line-height:1;padding:4px 10px;flex:0 0 auto}
 .narration{position:absolute;left:12px;right:12px;top:calc(max(10px,env(safe-area-inset-top)) + 64px);z-index:35;padding:12px 14px;border-radius:14px;background:#05070fcc;backdrop-filter:blur(6px);border:1px solid #9e83ff55;opacity:0;transform:translateY(-6px);transition:opacity .5s,transform .5s;pointer-events:none}.narration.on{opacity:1;transform:none}.narration p{margin:4px 0 0;font-size:15px;line-height:1.45;font-style:italic}
+#stage.party>.stageFg{display:none}.partySlot{position:absolute;bottom:0;top:6%;z-index:2;cursor:pointer}.partySlot .stageBg{display:none}
+#stage.p2 .partySlot.s0{left:-6%;width:56%}#stage.p2 .partySlot.s1{right:-6%;width:56%}@media(orientation:landscape){#stage.p2 .partySlot.s0{left:8%;width:40%}#stage.p2 .partySlot.s1{right:8%;width:40%}#stage.p3 .partySlot.s0{left:2%;width:34%}#stage.p3 .partySlot.s1{right:2%;width:34%}#stage.p3 .partySlot.s2{left:34%;width:32%}}
+#stage.p3 .partySlot.s0{left:-6%;width:50%;z-index:3}#stage.p3 .partySlot.s1{right:-6%;width:50%;z-index:3}#stage.p3 .partySlot.s2{left:28%;width:44%;top:12%;bottom:14%;z-index:1;filter:brightness(.92)}
+.partySlot .stageFg{transform:none!important}.partySlot .stageFg>*{object-position:50% 100%}
+.partyName{position:absolute;left:50%;bottom:calc(max(18px,env(safe-area-inset-bottom)) + 96px);transform:translateX(-50%);z-index:5;font-size:12px;padding:2px 8px;border-radius:10px;background:#0007;opacity:0;transition:opacity .3s}.partySlot.active .partyName{opacity:1;background:#9e83ffcc}
+.partySlot .stageFg>*{object-fit:contain!important;object-position:50% 100%!important}
