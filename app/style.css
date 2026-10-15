@@ -93,3 +93,13 @@ main.storyView{max-width:900px}@media(max-width:800px){main.storyView .content{p
 .guideBar{display:inline-flex;gap:6px;margin:-6px 0 10px}.guideBar .guideMute{margin:0}#guidePanel{position:fixed;left:12px;right:12px;bottom:14px;z-index:60;max-width:520px;margin:0 auto;background:var(--panel);border:1px solid var(--violet);border-radius:16px;padding:12px;box-shadow:0 10px 40px rgba(0,0,0,.5)}#modal #guidePanel{position:sticky;left:auto;right:auto;bottom:0;margin-top:12px}.gpHead{display:flex;justify-content:space-between;align-items:center}
 .guideTalk.on{background:#e5484d;border-color:#e5484d;color:#fff;box-shadow:0 0 0 5px #e5484d44}
 .guideTalk.pulse{animation:aiPulse 1.8s ease-in-out infinite}@keyframes aiPulse{0%,100%{box-shadow:0 0 0 0 #9e83ff66}50%{box-shadow:0 0 0 7px #9e83ff00}}
+#guideBot{position:fixed;right:10px;bottom:84px;z-index:55;width:92px;text-align:center;pointer-events:none}#modal #guideBot{position:sticky;float:right;bottom:6px;margin-top:-150px}
+#guideBot .gbHolo{position:relative;height:138px;opacity:.62;filter:drop-shadow(0 0 8px #6cd3ff88);animation:gbFloat 4s ease-in-out infinite;background:repeating-linear-gradient(0deg,#9fe8ff10 0 2px,transparent 2px 4px);border-radius:14px}
+#guideBot .gbFig,#guideBot .gbStage{position:absolute;inset:0}#guideBot .gbStage{overflow:hidden;border-radius:14px}#guideBot .gbSvg{width:100%;height:100%}
+#guideBot.talking .gbHolo{opacity:.8}#guideBot.standin.talking .gbSvg{animation:gbTalk .35s ease-in-out infinite alternate}
+#guideBot .gbCore{pointer-events:auto;position:absolute;left:50%;top:47%;width:26px;height:26px;margin-left:-13px;padding:0;border-radius:50%;border:2px solid #dff8ff;background:radial-gradient(circle,#ffffff 0,#7fe3ff 40%,#2a8cff 75%);box-shadow:0 0 12px 4px #6cd3ffaa;animation:gbCore 1.8s ease-in-out infinite;cursor:pointer}
+#guideBot.live .gbCore{background:radial-gradient(circle,#fff 0,#ff7a7f 40%,#e5484d 75%);box-shadow:0 0 14px 6px #e5484daa;border-color:#ffd9da}
+#guideBot .gbLabel{font-size:10.5px;line-height:1.2;color:#dff8ff;text-shadow:0 1px 3px #000;margin-top:2px}
+#guideBot .gbHide{pointer-events:auto;position:absolute;top:-6px;right:-4px;width:20px;height:20px;padding:0;border-radius:50%;font-size:12px;line-height:18px;opacity:.7}
+@keyframes gbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@keyframes gbCore{0%,100%{box-shadow:0 0 10px 3px #6cd3ff99}50%{box-shadow:0 0 18px 7px #6cd3ffcc}}@keyframes gbTalk{from{opacity:.8}to{opacity:1;filter:brightness(1.4)}}
+body:has(#guidePanel) #guideBot{bottom:190px}#guideBot{transition:bottom .3s}
