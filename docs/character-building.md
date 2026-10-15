@@ -21,9 +21,9 @@ Only make characters that are your own. Do not copy a real person's face or voic
 ## Step 1. The base picture
 
 ```
-Upper-body portrait of [describe your character: age, hair, eyes, clothing, style], facing the camera, standing straight in a relaxed neutral pose with a calm neutral expression, arms loosely at their sides, the whole head and both shoulders inside the frame with a little space above the head.
+Waist-up portrait of [describe your character: age, hair, eyes, clothing, style], facing the camera, standing straight in a relaxed neutral pose with a calm neutral expression, arms loosely at their sides. Camera at waist height. Frame from the waist up, with room above the head and a little room below the waist and at both sides, so hands and arms stay in frame when they move.
 Plain solid green background, evenly lit, with no shadows, no gradient and no floor line. Soft even light on the character. Nothing green on the character: no green clothing, jewellery or eyes.
-Vertical portrait shape. No text.
+Vertical portrait, 2:3 shape, 720 x 1080. No text.
 ```
 
 ## Step 2. The clips
@@ -78,7 +78,7 @@ They say exactly this, once, with no other words:
 "I've walked a long way to find this place. The air is quiet here, and the lights below look like scattered stars. Stay a while, and tell me where you'd like to go."
 
 Audio: their voice only. No music, no background sound, no ambience, no echo, no other voices. Clear, close microphone sound.
-Camera: fixed upper-body shot, steady, no cuts. About 10 to 12 seconds.
+Camera: fixed waist-up shot, steady, no cuts. About 10 to 12 seconds.
 ```
 
 ## Step 4. Put them in
