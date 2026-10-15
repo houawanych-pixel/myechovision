@@ -62,7 +62,7 @@ const me=stage;glanceTimer=setInterval(()=>{if(stage!==me){clearInterval(glanceT
 // Picks the expression for a finished line: a nod or head shake when it opens with yes or no, otherwise its feeling.
 function emote(m){if(!stage||!m)return;const g=gestureFor(m.text);if(g&&stage.show(g,{force:false}))return;if(m.emotion&&m.emotion!=='normal')stage.show(m.emotion,{force:false})}
 function portrait(c,cls=''){const src=mediaURL(c.image);return src?`<img class="${cls}" src="${esc(src)}" alt="${esc(c.name)}">`:`<div class="abstract ${cls}">${esc(c.name.slice(0,1))}</div>`}
-function top(title,sub){return `<div class="topline"><span class="mobileBrand">MY ECHO VISION</span><span class="tag">Private studio</span></div><h2>${title}</h2><p class="sub">${sub}</p>`}
+function top(title,sub){return `<div class="topline"><span class="mobileBrand">MY ECHOVISION</span><span class="tag">Private studio</span></div><h2>${title}</h2><p class="sub">${sub}</p>`}
 function modal(html){$('#modalBody').innerHTML=html;$('#modal').showModal()}$('#closeModal').onclick=()=>$('#modal').close();
 document.querySelector('.rail .brand')?.addEventListener('click',e=>{e.preventDefault();navigate('home')});
 function navigate(v){if(v!=='chat')music.stop();dropGuess();if(v!=='chat'){stage?.destroy();stage=null}if(voicePrep&&v!=='book'){voicePrep.stop=true}if(recognition){try{recognition.abort()}catch{}}awaiting=false;clone.stop();view=v;if(v==='setup')step=0;render()}
