@@ -4,7 +4,7 @@
 // Characters are green-screen clips keyed by the same WebGL stage the chat uses (stage.mjs); tap one or call
 // them by name to talk through the AI brain. Logic (format, state machine, quests) lives in story-core.mjs.
 import { readIndex, validateCampaign, startRun, control, stickInput, nameCalled, clipSlots, mediaPath, grokPrompt, isVideoFile } from './story-core.mjs?v=1';
-import { createStage } from './stage.mjs?v=13';
+import { createStage } from './stage.mjs?v=14';
 import { remoteReply } from './brain.mjs?v=18';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
