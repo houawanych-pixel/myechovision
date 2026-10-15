@@ -83,6 +83,12 @@ if (SHIP) {
   plan = { open: true, rooms: [], doors: [], lifts: [], decks: [0] };
 }
 let doorMat = null;
+// windows look out into space: the glass shows a 360 sky in the direction you look through it, so it moves like a real view
+// (the nebula sits ahead of the ship's nose; a sprinkle of fine stars is added on top)
+const skyTex = new THREE.TextureLoader().load('assets/sky/crystara.jpg'); skyTex.colorSpace = THREE.NoColorSpace;
+const windowMat = new THREE.ShaderMaterial({ uniforms: { sky: { value: skyTex } },
+  vertexShader: 'varying vec3 wp;void main(){vec4 w=modelMatrix*vec4(position,1.0);wp=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
+  fragmentShader: 'uniform sampler2D sky;varying vec3 wp;float h(vec3 p){return fract(sin(dot(p,vec3(12.9898,78.233,37.719)))*43758.5453);}void main(){vec3 d=normalize(wp-cameraPosition);float lon=atan(d.x,-d.z);vec2 uv=vec2(0.5+lon/6.2831853,0.5+asin(clamp(d.y,-1.0,1.0))/3.1415926);vec3 c=texture2D(sky,uv).rgb*1.15;vec3 q=floor(d*420.0);float s=h(q);if(s>0.992)c+=vec3(0.85,0.9,1.0)*(s-0.992)*110.0*smoothstep(0.5,0.0,length(fract(d*420.0)-0.5));gl_FragColor=vec4(c,1.0);}' });
 const holoMat = new THREE.ShaderMaterial({ vertexShader: 'varying vec3 wp;void main(){vec4 w=modelMatrix*vec4(position,1.0);wp=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
   fragmentShader: 'varying vec3 wp;void main(){vec3 g=abs(fract(wp/1.0)-0.5);float l=smoothstep(0.47,0.5,max(max(g.x,g.y),g.z)*0.0+min(min(max(g.x,g.y),max(g.y,g.z)),max(g.x,g.z)));gl_FragColor=vec4(vec3(0.02,0.02,0.02)+vec3(1.0,0.72,0.2)*l*0.9,1.0);}' });
 // windows: the Blender star shader does not travel in the file, so the glass gets a star field drawn here
@@ -94,7 +100,9 @@ gltf.scene.traverse(o => {
   // the cabins' painted door is replaced by real sliding doors; keep its picture for every door leaf
   if (m && /doorimg/i.test(m.name || '')) { doorMat = m; o.visible = false }
   if (m && m.transparent && m.opacity < 0.05) o.visible = false;
-  if (m && /star/i.test(m.name || '')) o.material = starMat;
+  if (m && /star/i.test(m.name || '')) o.material = windowMat;
+  // monitors stay dark glass for now (a screen animation can play on them later)
+  if (m && /screen/i.test(m.name || '')) { m.color.set(0x050608); m.emissive?.set(0x000000); m.emissiveIntensity = 0; m.roughness = 0.12; m.metalness = 0.4 }
   // Blender's procedural looks, redone simply: glass you can see through, the Voyager-style carpet, the holodeck grid
   if (m && /glass|frost/i.test(m.name || '')) { m.transparent = true; m.opacity = /frost/i.test(m.name) ? 0.55 : 0.18; m.depthWrite = false; m.roughness = 0.05 }
   if (m && /carpet/i.test(m.name || '')) { m.color.set(0x8d9097); m.roughness = 0.9; m.metalness = 0 }
@@ -137,7 +145,9 @@ for (const d of plan.doors) {
   for (const s of [-1, 1]) {
     const g = new THREE.BoxGeometry(half, h, 0.07);
     // each leaf shows its half of the door picture
-    const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setX(i, s < 0 ? uv.getX(i) * 0.5 : 0.5 + uv.getX(i) * 0.5);
+    // each leaf shows its half of the door picture. Seen from the back (box face 5, vertices 20-23) the leaves swap
+    // sides, so that face takes the other half: the door reads the right way round from both corridors.
+    const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) { const left = (i >= 20 && i < 24) ? s > 0 : s < 0; uv.setX(i, left ? uv.getX(i) * 0.5 : 0.5 + uv.getX(i) * 0.5) }
     const mesh = new THREE.Mesh(g, d.works ? doorMat : doorMat.clone());
     if (!d.works) mesh.material.color = new THREE.Color(0x6b5a5a);
     doorGroup.add(mesh); leaves.push({ mesh, s });
@@ -166,17 +176,16 @@ else if(key>0.5){float k=c.g-max(c.r,c.b);a=1.0-smoothstep(0.06,0.2,k);o.g=min(o
 a*=c.a*smoothstep(0.0,fadeBottom,vUv.y);if(a<0.02)discard;
 o=mix(vec3(dot(o,vec3(0.299,0.587,0.114))),o,1.12);o=(o-0.5)*1.06+0.5;   // a touch more colour and contrast: keyed clips look washed out otherwise
 gl_FragColor=vec4(clamp(o,0.0,1.0)*light,a);
-#include <colorspace_fragment>
 }`;
 function videoClip(src) {
   const v = document.createElement('video');
   v.src = src; v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.crossOrigin = 'anonymous';
-  const tex = new THREE.VideoTexture(v); tex.colorSpace = THREE.SRGBColorSpace;
+  const tex = new THREE.VideoTexture(v); tex.colorSpace = THREE.NoColorSpace;   // raw pixels, shown as they are
   return { v, tex };
 }
 const blank = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1); blank.needsUpdate = true;
 const stillSrc = P.still?.url || (P.normal && !P.normal.video ? P.normal.url : '');
-const still = stillSrc ? new THREE.TextureLoader().load(stillSrc, t => fitBillboard(t.image.width, t.image.height)) : blank; still.colorSpace = THREE.SRGBColorSpace;
+const still = stillSrc ? new THREE.TextureLoader().load(stillSrc, t => fitBillboard(t.image.width, t.image.height)) : blank; still.colorSpace = THREE.NoColorSpace;
 const clips = {};
 if (P.normal?.video) clips.normal = videoClip(P.normal.url);
 if (P.walk?.video) clips.walk = videoClip(P.walk.url);
@@ -360,7 +369,7 @@ function frame(now) {
       np = !blocked(q, player.floor, dx, dy) ? [q[0] + dx, q[1] + dy] : !blocked(q, player.floor, dx, 0) ? [q[0] + dx, q[1]] : !blocked(q, player.floor, 0, dy) ? [q[0], q[1] + dy] : q;
     }
     player.vel = [(np[0] - player.p[0]) / dt, (np[1] - player.p[1]) / dt]; player.p = np;
-    if (Math.hypot(vx, vy) > 0.1 && !hintTimer) hintTimer = setTimeout(() => $('hint').style.opacity = '0', 2500);
+    
     const fl = SHIP ? floorAt(plan, player.p, player.deck) : groundAt(player.p, player.floor + 1.2) ?? player.floor; player.floor += (fl - player.floor) * Math.min(1, dt * 6);
     recordTrail(judy, player.p, player.deck);
   } else player.vel = [0, 0];
@@ -448,14 +457,20 @@ bigmap.addEventListener('click', e => { if (e.target === mapc) bigmap.style.disp
 
 // ---------- talking while walking ----------
 let talking = false, talk = null, sayTimer = 0;
-const sayEl = $('say');
+// Nothing pops up over the view: every line (yours, hers, and notes like "the brain is not connected")
+// goes into the Log, which you open with the Log button when you want to read back.
+const logLines = [], logEl = $('log'), logList = $('logList'), logBtn = $('logBtn');
 function showLine(who, text) {
-  clearTimeout(sayTimer);
-  sayEl.className = 'say' + (who === 'you' ? ' you' : '');
-  sayEl.innerHTML = who === 'her' ? `<b>${(talk?.name || P.name).replace(/[<&>]/g, '')}:</b> ${text.replace(/[<&>]/g, '')}` : who === 'you' ? `You: ${text.replace(/[<&>]/g, '')}` : text.replace(/[<&>]/g, '');
-  sayEl.style.opacity = '1';
-  sayTimer = setTimeout(() => { sayEl.style.opacity = '0' }, who === 'her' ? Math.max(4500, text.length * 70) : 3500);
+  logLines.push({ who, text, t: new Date() });
+  if (logEl.style.display === 'block') renderLog(); else if (who === 'note') logBtn.classList.add('dot');
 }
+function renderLog() {
+  const esc = t => String(t).replace(/[<&>]/g, c => ({ '<': '&lt;', '&': '&amp;', '>': '&gt;' }[c]));
+  logList.innerHTML = logLines.length ? logLines.map(l => `<p class="${l.who}">${l.who === 'her' ? `<b>${esc(talk?.name || P.name)}</b> ` : l.who === 'you' ? '<b>You</b> ' : ''}${esc(l.text)}</p>`).join('') : '<p class="note">Nothing said yet.</p>';
+  logList.scrollTop = logList.scrollHeight;
+}
+logBtn.onclick = () => { const open = logEl.style.display !== 'block'; logEl.style.display = open ? 'block' : 'none'; logBtn.classList.toggle('on', open); logBtn.classList.remove('dot'); if (open) renderLog() };
+$('logClose').onclick = () => { logEl.style.display = 'none'; logBtn.classList.remove('on') };
 const typebar = $('typebar'), typeIn = $('typeIn'), talkBtn = $('talkBtn'), typeBtn = $('typeBtn');
 typeBtn.onclick = () => { const open = typebar.style.display !== 'flex'; typebar.style.display = open ? 'flex' : 'none'; typeBtn.classList.toggle('on', open); if (open) typeIn.focus() };
 typebar.onsubmit = e => {

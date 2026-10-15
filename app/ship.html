@@ -44,7 +44,11 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 .typebar{position:fixed;left:14px;right:132px;top:calc(max(10px,env(safe-area-inset-top)) + 100px);display:none;gap:8px}
 .typebar input{flex:1;min-width:0;border:1px solid var(--cyan);background:rgba(10,14,26,.92);color:var(--text);border-radius:14px;padding:12px 14px;font-size:16px}
 .typebar button{border:0;border-radius:14px;padding:0 16px;background:var(--cyan);color:#06222a;font-weight:700;font-size:15px}
-.say{position:fixed;left:50%;top:calc(max(10px,env(safe-area-inset-top)) + 172px);transform:translateX(-50%);width:min(88vw,520px);text-align:center;font-size:16px;line-height:1.4;color:#fff;text-shadow:0 1px 3px #000,0 0 10px #000;pointer-events:none;opacity:0;transition:opacity .35s}
+.log{position:fixed;left:14px;right:14px;top:calc(max(10px,env(safe-area-inset-top)) + 100px);max-height:45vh;display:none;background:rgba(10,14,26,.94);border:1px solid var(--line);border-radius:16px;padding:10px 14px;z-index:4}
+.logHead{display:flex;align-items:center;justify-content:space-between;color:var(--cyan);margin-bottom:6px}.logHead button{border:0;background:none;color:var(--text);font-size:22px}
+#logList{max-height:calc(45vh - 50px);overflow-y:auto;font-size:15px;line-height:1.45}#logList p{margin:0 0 8px}#logList .you{color:#c9cfe6}#logList .note{color:var(--muted);font-size:13px}#logList b{color:var(--cyan)}
+.chip.dot{position:relative}.chip.dot::after{content:'';position:absolute;right:4px;top:4px;width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.say-unused{position:fixed;left:50%;top:calc(max(10px,env(safe-area-inset-top)) + 172px);transform:translateX(-50%);width:min(88vw,520px);text-align:center;font-size:16px;line-height:1.4;color:#fff;text-shadow:0 1px 3px #000,0 0 10px #000;pointer-events:none;opacity:0;transition:opacity .35s}
 .say b{color:var(--cyan)}.say.you{color:#d8dcef;font-size:14px}
 .bigmap{position:fixed;inset:0;display:none;background:rgba(6,9,18,.94);z-index:5}
 .bigmap canvas{width:100%;height:100%;display:block}
@@ -54,14 +58,13 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 <canvas id="view"></canvas>
 <div id="stick"></div><div class="knob" id="knob"><i></i><b class="l"></b><b class="r"></b></div>
 <div class="hud"><a class="back" href="./">← My Echo Vision</a><span class="where" id="where">Deck 5</span></div>
-<div class="row2"><button class="chip" id="talkBtn">🎙 Talk</button><button class="chip" id="typeBtn">⌨ Type</button><canvas id="radar" width="208" height="208" aria-label="Map"></canvas></div>
+<div class="row2"><button class="chip" id="talkBtn">🎙 Talk</button><button class="chip" id="typeBtn">⌨ Type</button><button class="chip" id="logBtn">Log</button><canvas id="radar" width="208" height="208" aria-label="Map"></canvas></div>
 <form class="typebar" id="typebar" autocomplete="off"><input id="typeIn" placeholder="Say something…" enterkeyhint="send"><button>Send</button></form>
-<div class="say" id="say"></div>
+<div class="log" id="log"><div class="logHead"><b>Log</b><button id="logClose" aria-label="Close log">×</button></div><div id="logList"></div></div>
 <div class="bigmap" id="bigmap"><canvas id="mapc"></canvas><div class="title" id="mapTitle">Deck 5</div><button class="close" id="mapClose" aria-label="Close map">×</button></div>
-<div class="hint" id="hint">Stick: walk and turn.<br>Drag on the right to look up.</div>
 <button class="call" id="call">Call lift</button>
 <div class="panel" id="panel"><h3>Turbolift</h3><div id="floors"></div></div>
 <div class="fade" id="fade"></div>
 <div class="start" id="start"><h1>Walk the ship</h1><p>Judy walks with you. Doors open as you reach them. Step into a lift and choose a deck.</p><button id="go" disabled>Loading the ship…</button></div>
-<script type="module" src="ship.mjs?v=8"></script>
+<script type="module" src="ship.mjs?v=10"></script>
 </body></html>
