@@ -33,6 +33,7 @@ Give the generator the base picture and this prompt, with one ACTION line. Make 
 ```
 Use the provided image as the exact first frame and the exact last frame.
 The character stays in place: same framing, same position, same size, same lighting, same clothing. Fixed camera, no zoom, no cuts. Plain solid green background that never changes, evenly lit, with no shadows on it. No text and nothing entering the frame.
+(For actions such as dances, waves and your own: keep both hands and arms inside the frame the whole time; keep the movement compact enough that nothing is cut off.)
 She begins in the neutral pose, performs the action below, and returns to the identical neutral pose by the end, so the clip loops seamlessly.
 Length: 8 to 10 seconds. No sound needed.
 
