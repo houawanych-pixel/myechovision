@@ -503,7 +503,9 @@ function musicLibrary(){const row=t=>`<div class="clipRow"><div class="setupText
 // (one every 25 s at most) and never on top of a reply or while you are talking.
 let worldTalkAt=0;
 function tellCharacters(s,what,{answer=true,minGap=25000}={}){if(!s||view!=='chat'||currentSession()!==s)return false;s.messages.push({role:'user',text:`(${what})`,world:true});save();if(typeof drawMessages==='function')drawMessages();
-  const now=Date.now();if(!answer||!brainReady()||s.brain===false||thinking||awaiting||now-worldTalkAt<minGap)return false;worldTalkAt=now;setTimeout(()=>{if(currentSession()===s&&view==='chat'&&!thinking)brainReply(s)},1200);return true}
+  const now=Date.now();if(!answer||!brainReady()||s.brain===false||thinking||awaiting||now-worldTalkAt<minGap)return false;worldTalkAt=now;setTimeout(()=>{if(currentSession()!==s||view!=='chat'||thinking)return;const who=partyOf(s);if(who){const id=pickSpeaker(s,who);if(id&&id!==s.partner)selectPartner(s,id)}brainReply(s)},1200);return true}
+// After a group reacts, who speaks first: someone who did not speak last, and the jumpy ones blurt before the calm ones.
+function pickSpeaker(s,ids){const last=[...s.messages].reverse().find(m=>m.role==='assistant'&&m.who)?.who,rank=id=>({scared:3,surprised:2,calm:1}[reactStyle(findCast(id))]||1)+(id===last?-2:0)+Math.random();return ids.slice().sort((a,b)=>rank(b)-rank(a))[0]}
 const HIT_SAYS={boom:'heavy booming from somewhere deep in the station, getting closer',skitter:'something fast skittering through the walls, right past you',groan:'a long metal groan somewhere in the dark'};
 const dread={ac:null,bed:null,timer:0,sceneId:'',hits:0,lastTalk:0,
   ctx(){if(!this.ac){const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;this.ac=new A();this.out=this.ac.createGain();this.out.gain.value=0.9;this.out.connect(this.ac.destination)}if(this.ac.state==='suspended')this.ac.resume().catch(()=>{});return this.ac},
