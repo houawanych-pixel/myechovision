@@ -296,7 +296,8 @@ async function enableBrain(s,choose=false){const done=()=>{const back=guideRetur
       const go=create=>async e=>{const b=e.currentTarget,old=b.textContent;b.disabled=true;b.textContent='Waiting for your passkey…';try{const r=await vault.signIn({create});toast(r.created?'Sign-in created. Now connect your key.':'Signed in.');drawVault()}catch(err){toast(err.message,true);b.disabled=false;b.textContent=old}};
       $('#vIn').onclick=go(false);$('#vNew').onclick=go(true);return}
     let st;try{st=await vault.status()}catch(err){if(err.code==='signed_out')return drawVault();box.innerHTML=`<p class="footerNote">${esc(err.message)}</p>`;return}
-    const conn=Object.fromEntries(st.providers.map(p=>[p.provider,p])),first=onVault||(st.providers.find(p=>p.connected)?.provider)||'openai';
+    const conn=Object.fromEntries(st.providers.map(p=>[p.provider,p])),first='groq';// Groq (free tier, keys start with gsk_) is always the default pick when the panel opens.
+
     box.innerHTML=`<form id="vaultForm" autocomplete="off"><label>AI service<select name="provider">${P.map(p=>`<option value="${p.id}" ${p.id===first?'selected':''}>${esc(p.name)}${conn[p.id]?.connected?' · connected':''}</option>`).join('')}</select></label>
       <p class="footerNote" id="vStatus" style="margin:6px 0"></p>
       <div id="vKeyRow"><label>API key<span style="display:flex;gap:8px"><input name="key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" style="flex:1"><button type="button" class="secondary" id="vShow" style="min-width:64px">Show</button></span></label>
