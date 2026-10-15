@@ -32,14 +32,14 @@ async function mediaOf(key) {
   const b = await idbGet(key); return b ? { url: URL.createObjectURL(b), video: /^video\//.test(b.type) } : null;
 }
 async function loadConfig() {
-  const JUDY = { name: 'Judy', still: { url: 'assets/judy.webp' }, normal: { url: 'assets/judy-normal.mp4', video: true }, walk: { url: 'assets/judy-walk.mp4', video: true }, talk: { url: 'assets/judy-talk.mp4', video: true }, chroma: 'green', spill: 0.8, cut: true };
+  const JUDY = { name: 'Judy', still: { url: 'assets/judy.webp' }, normal: { url: 'assets/judy-normal.mp4', video: true }, walk: { url: 'assets/judy-walk-knee.mp4', video: true }, walkSound: 'assets/judy-walk-knee.mp3', talk: { url: 'assets/judy-talk.mp4', video: true }, chroma: 'green', spill: 0.8, cut: true };
   let st = null; try { st = JSON.parse(localStorage.getItem('echo-vision-studio-v2')) } catch { }
   const sid = params.get('session'), sess = sid && st?.sessions?.find(x => x.id === sid);
   if (!sess) return { world: 'ship', name: 'Walk the ship', partner: JUDY };
   const scene = st.scenes.find(x => x.id === sess.scene) || {}, c = st.cast.find(x => x.id === sess.partner) || {};
   const partner = c.id === 'judy' ? JUDY : {
     name: c.name || 'Your companion', chroma: c.chroma || 'none', spill: c.spill ?? 0.8, rigged: !!c.rigged, cut: !!c.chroma && c.chroma !== 'none',
-    model: (await mediaOf(c.model))?.url || '', still: await mediaOf(c.image), normal: await mediaOf(c.clips?.normal || c.loop), walk: await mediaOf(c.clips?.walk), talk: await mediaOf(c.clips?.talking)
+    model: (await mediaOf(c.model))?.url || '', still: await mediaOf(c.image), normal: await mediaOf(c.clips?.normal || c.loop), walk: await mediaOf(c.clips?.walkLoop || c.clips?.walk), walkSound: (await mediaOf(c.walkSound))?.url || '', talk: await mediaOf(c.clips?.talking)
   };
   return { world: !scene.world || scene.world === 'ship' ? 'ship' : (await mediaOf(scene.world))?.url || 'ship', name: scene.name || 'Your world', partner };
 }
@@ -288,6 +288,29 @@ async function loadSteps() {
     walkers[id] = { src, g, pan };
   }
 }
+// Her own walk sound (cut from the same take as her walk loop) plays in step with the video: the sound is a separate
+// file looped in Web Audio (no gap at the loop), and it is re-lined up with the video whenever the two drift apart.
+let herWalk = null;
+async function loadHerWalk() {
+  if (!P.walkSound || !clips.walk) return;
+  try {
+    const buf = await actx.decodeAudioData(await (await fetch(P.walkSound)).arrayBuffer());
+    const g = actx.createGain(), pan = actx.createStereoPanner ? actx.createStereoPanner() : null; g.gain.value = 0;
+    (pan ? g.connect(pan) : g).connect(actx.destination);
+    herWalk = { buf, g, pan, src: null, t0: 0, L: 1 };
+  } catch { herWalk = null }
+}
+function herWalkSync() {
+  const h = herWalk, v = clips.walk.v; if (!h || v.readyState < 2) return;
+  const L = Math.min(v.duration || h.buf.duration, h.buf.duration);
+  let drift = 1;
+  if (h.src) { const pos = (actx.currentTime - h.t0) % h.L; drift = Math.abs(pos - v.currentTime); drift = Math.min(drift, h.L - drift) }
+  if (drift > 0.07) {
+    try { h.src?.stop() } catch { }
+    const s = actx.createBufferSource(); s.buffer = h.buf; s.loop = true; s.loopStart = 0; s.loopEnd = L; s.connect(h.g);
+    const off = v.currentTime % L; s.start(0, off); h.src = s; h.t0 = actx.currentTime - off; h.L = L;
+  }
+}
 function footsteps() {
   if (!walkers.me) return;
   const t = actx.currentTime, mine = Math.hypot(...player.vel);
@@ -296,8 +319,10 @@ function footsteps() {
   const herSp = judy.moving && judy.deck === player.deck ? Math.hypot(...judy.vel) : 0;
   const dx = judy.p[0] - player.p[0], dy = judy.p[1] - player.p[1], dist = Math.hypot(dx, dy) || 1;
   const side = (dx * Math.cos(player.yaw) + dy * Math.sin(player.yaw)) / dist;
-  walkers.her.g.gain.setTargetAtTime(herSp > 0.3 ? 0.45 / Math.max(1, dist * 0.5) : 0, t, herSp > 0.3 ? 0.06 : 0.12);
-  if (walkers.her.pan) walkers.her.pan.pan.setTargetAtTime(Math.max(-0.85, Math.min(0.85, side * 0.85)), t, 0.1);
+  const her = herWalk ? herWalk : walkers.her, onWalk = herSp > 0.3 && (!herWalk || judyClip === 'walk');
+  if (herWalk) { walkers.her.g.gain.setTargetAtTime(0, t, 0.05); herWalkSync() }
+  her.g.gain.setTargetAtTime(onWalk ? (herWalk ? 0.9 : 0.45) / Math.max(1, dist * 0.5) : 0, t, onWalk ? 0.06 : 0.12);
+  if (her.pan) her.pan.pan.setTargetAtTime(Math.max(-0.85, Math.min(0.85, side * 0.85)), t, 0.1);
 }
 
 // ---------- lifts ----------
@@ -396,7 +421,7 @@ function frame(now) {
     judyMesh.position.copy(V(judy.p[0], judy.p[1], jf + TOP - JH / 2));
     judyMesh.rotation.set(0, Math.atan2(camera.position.x - judyMesh.position.x, camera.position.z - judyMesh.position.z), 0);
     const away = judy.moving && ((judy.p[0] - player.p[0]) * judy.vel[0] + (judy.p[1] - player.p[1]) * judy.vel[1]) > 0.3;
-    showClip(talking && clips.talk ? 'talk' : away ? 'walk' : 'normal');
+    showClip(talking && clips.talk ? 'talk' : (P.walkSound ? judy.moving : away) ? 'walk' : 'normal');
   }
   placeCamera();
   if (now - labelTimer > 300 && !riding) {
@@ -507,7 +532,7 @@ requestAnimationFrame(frame);
 const go = $('go'); go.disabled = false; go.textContent = 'Start walking';
 go.onclick = () => {
   startTalk();
-  try { actx = new (window.AudioContext || window.webkitAudioContext)(); loadSteps() } catch { }
+  try { actx = new (window.AudioContext || window.webkitAudioContext)(); loadSteps(); loadHerWalk() } catch { }
   for (const c of Object.values(clips)) c.v.play().then(() => { judyClip = null }).catch(() => { });
   $('start').style.display = 'none'; started = true;
 };
