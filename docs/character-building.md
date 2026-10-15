@@ -23,7 +23,7 @@ Only make characters that are your own. Do not copy a real person's face or voic
 ```
 Waist-up portrait of [describe your character: age, hair, eyes, clothing, style], facing the camera, standing straight in a relaxed neutral pose with a calm neutral expression, arms loosely at their sides. Camera at waist height. Frame from the waist up, with room above the head and a little room below the waist and at both sides, so hands and arms stay in frame when they move.
 Plain solid green background, evenly lit, with no shadows, no gradient and no floor line. Soft even light on the character. Nothing green on the character: no green clothing, jewellery or eyes.
-Vertical portrait, 2:3 shape, 720 x 1080. No text.
+Vertical portrait, 2:3 shape: 480 x 720 is enough for phones; use 720 x 1080 or more if it will play on a big widescreen. No text.
 ```
 
 ## Step 2. The clips
