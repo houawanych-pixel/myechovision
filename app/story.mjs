@@ -5,7 +5,7 @@
 // them by name to talk through the AI brain. Logic (format, state machine, quests) lives in story-core.mjs.
 import { readIndex, validateCampaign, startRun, control, stickInput, nameCalled, clipSlots, mediaPath, grokPrompt, isVideoFile } from './story-core.mjs?v=1';
 import { createStage } from './stage.mjs?v=13';
-import { remoteReply } from './brain.mjs?v=15';
+import { remoteReply } from './brain.mjs?v=16';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const IMPORTED = 'ev-campaigns-imported';

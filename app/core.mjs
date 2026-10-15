@@ -12,9 +12,15 @@ You are talking with ${ctx.player||'a traveler'}${ctx.playerPersona?` (${ctx.pla
 How ${ctx.player||'they'} looks: ${ctx.playerLook}`:''}${ctx.sceneLook?`
 What you can both see around you: ${ctx.sceneLook}`:''}
 Rules: Answer with spoken words only, 1 to 3 short sentences. No narration, no stage directions, no asterisks. Never say you are an AI. When clothing, colors or surroundings come up, go by the notes above; if someone gets a detail wrong, gently say what is really there.
-Start every answer with one feeling tag from this list: [normal] [happy] [sad] [surprised] [scared] [angry]. Example: [happy] It is good to see you again.`;return [{role:'system',content:sys},...(ctx.messages||[]).slice(-12).map(m=>({role:m.role==='user'?'user':'assistant',content:m.role==='user'?m.text:`[${EMOTIONS.includes(m.emotion)?m.emotion:'normal'}] ${m.text}`}))]}
+Start every answer with one feeling tag from this list: [normal] [happy] [sad] [surprised] [scared] [angry]. Example: [happy] It is good to see you again.${ctx.story?`
+
+The story you are both in (a narrator tells the player the big moments; you live inside them):
+How it began: ${ctx.story.intro||'-'}
+Right now: ${ctx.story.now||'-'}
+${ctx.story.next?`Where it is heading next: ${ctx.story.next}
+`:''}Let the player lead and talk freely; do not rush or lecture. React to what happens and, when it fits naturally, nudge things toward where it is heading. ${ctx.story.next?'When what "Right now" describes has clearly happened or been settled in the conversation, add the tag [next] at the very end of your answer.':''}`:''}`;return [{role:'system',content:sys},...(ctx.messages||[]).slice(-12).map(m=>({role:m.role==='user'?'user':'assistant',content:m.role==='user'?m.text:`[${EMOTIONS.includes(m.emotion)?m.emotion:'normal'}] ${m.text}`}))]}
 // Splits a raw model answer into {emotion,text}. Tolerates a missing tag, a "Name:" prefix, quotes and *actions*.
-export function parseReply(raw,name=''){let t=String(raw||'').replace(/<think>[\s\S]*?(<\/think>|$)/g,'').trim(),emotion='normal';const m=t.match(/^[\[(]\s*(normal|happy|sad|surprised|scared|angry)\s*[\])]?[:\s-]*/i);if(m){emotion=m[1].toLowerCase();t=t.slice(m[0].length)}t=t.replace(/\*[^*]*\*/g,' ').replace(/\[(normal|happy|sad|surprised|scared|angry)\]/gi,' ');if(name){const n=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');t=t.replace(new RegExp(`^\\s*${n}\\s*:\\s*`,'i'),'')}t=t.replace(/\s+/g,' ').trim().replace(/^["“](.*)["”]$/,'$1').trim();return {emotion,text:t}}
+export function parseReply(raw,name=''){let t=String(raw||'').replace(/<think>[\s\S]*?(<\/think>|$)/g,'').trim(),emotion='normal';const next=/\[next\]/i.test(t);t=t.replace(/\[next\]/gi,' ').trim();const m=t.match(/^[\[(]\s*(normal|happy|sad|surprised|scared|angry)\s*[\])]?[:\s-]*/i);if(m){emotion=m[1].toLowerCase();t=t.slice(m[0].length)}t=t.replace(/\*[^*]*\*/g,' ').replace(/\[(normal|happy|sad|surprised|scared|angry)\]/gi,' ');if(name){const n=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');t=t.replace(new RegExp(`^\\s*${n}\\s*:\\s*`,'i'),'')}t=t.replace(/\s+/g,' ').trim().replace(/^["“](.*)["”]$/,'$1').trim();return next?{emotion,text:t,next:true}:{emotion,text:t}}
 // True when two heard sentences are the same once case, punctuation and spacing are ignored.
 // Used to decide whether an answer prepared while the person was still talking can be kept.
 export function sameUtterance(a,b){const n=x=>String(x||'').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu,'').replace(/\s+/g,' ').trim();return !!n(a)&&n(a)===n(b)}
