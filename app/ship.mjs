@@ -44,7 +44,7 @@ async function loadConfig() {
   const extras = [];
   for (const id of (sess.party || []).filter(x => x !== sess.partner && x !== sess.player).slice(0, 2)) {
     const m = st.cast.find(x => x.id === id); if (!m) continue;
-    extras.push({ name: m.name, chroma: m.chroma || 'none', spill: m.spill ?? 0.8, still: await mediaOf(m.image), normal: await mediaOf(m.clips?.normal || m.loop), walk: await mediaOf(m.clips?.walkLoop || m.clips?.walk) });
+    extras.push({ name: m.name, chroma: m.chroma || 'none', spill: m.spill ?? 0.8, still: await mediaOf(m.image), normal: await mediaOf(m.clips?.normal || m.loop), walk: await mediaOf(m.clips?.walkLoop || m.clips?.walk), full: await mediaOf(m.clips?.approach) });
   }
   return { world: !scene.world || scene.world === 'ship' ? 'ship' : (await mediaOf(scene.world))?.url || 'ship', name: scene.name || 'Your world', partner, extras };
 }
@@ -207,14 +207,17 @@ function fitBillboard(w, h) { if (w && h) judyMesh.scale.x = (w / h) / (400 / 73
 // Up to two more people follow you too. Nobody walks in single file or hides behind someone else: the first two
 // walk side by side (one a little left, one a little right of your path) and a third trails further back in the
 // middle, so you see all of them when you look back. Each has their own billboard and clips.
+const FULL_H = 1.72;
 const EXTRAS = (CFG.extras || []).map((X, i) => {
-  const xc = {}; if (X.normal?.video) xc.normal = videoClip(X.normal.url); if (X.walk?.video) xc.walk = videoClip(X.walk.url);
+  // The one further back is seen whole, head to foot, so they use their full-body (far) walk when they have one.
+  const full = i === 1 && !!X.full?.video;
+  const xc = {}; if (full) { xc.walk = videoClip(X.full.url); xc.normal = xc.walk } else { if (X.normal?.video) xc.normal = videoClip(X.normal.url); if (X.walk?.video) xc.walk = videoClip(X.walk.url) }
   const xsrc = X.still?.url || (X.normal && !X.normal.video ? X.normal.url : '');
   const xstill = xsrc ? new THREE.TextureLoader().load(xsrc) : blank; xstill.colorSpace = THREE.NoColorSpace;
-  const mat = new THREE.ShaderMaterial({ uniforms: { map: { value: xstill }, spill: { value: X.spill ?? 0.8 }, light: { value: 1.0 }, key: { value: X.chroma === 'blue' ? 2 : X.chroma === 'green' ? 1 : 0 }, fadeBottom: { value: 0.3 } }, vertexShader: KEY_VS, fragmentShader: KEY_FS, transparent: true, depthWrite: false });
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(JW, JH), mat); mesh.renderOrder = 9 - i; scene.add(mesh);
-  for (const c of Object.values(xc)) c.v.addEventListener('loadedmetadata', () => { if (c.v.videoWidth) mesh.scale.x = (c.v.videoWidth / c.v.videoHeight) / (400 / 736) }, { once: true });
-  return { X, clips: xc, still: xstill, mat, mesh, f: null, lane: i === 0 ? 0.75 : 0, gap: i === 0 ? 1.45 : 2.7, off: [0, 0], shown: null };
+  const mat = new THREE.ShaderMaterial({ uniforms: { map: { value: xstill }, spill: { value: X.spill ?? 0.8 }, light: { value: 1.0 }, key: { value: X.chroma === 'blue' ? 2 : X.chroma === 'green' ? 1 : 0 }, fadeBottom: { value: full ? 0.0 : 0.3 } }, vertexShader: KEY_VS, fragmentShader: KEY_FS, transparent: true, depthWrite: false });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(full ? FULL_H * 0.66 : JW, full ? FULL_H : JH), mat); mesh.renderOrder = 9 - i; scene.add(mesh);
+  for (const c of Object.values(xc)) c.v.addEventListener('loadedmetadata', () => { if (c.v.videoWidth) mesh.scale.x = (c.v.videoWidth / c.v.videoHeight) / (full ? 0.66 : 400 / 736) }, { once: true });
+  return { X, full, clips: xc, still: xstill, mat, mesh, f: null, lane: i === 0 ? 0.75 : 0, gap: i === 0 ? 1.45 : 2.7, off: [0, 0], shown: null };
 });
 const JUDY_LANE = EXTRAS.length ? -0.75 : 0;
 // A sideways nudge across the path to the player, eased, and only where there is floor for it.
@@ -430,7 +433,8 @@ function frame(now) {
   for (const e of EXTRAS) {
     if (!e.f) continue; recordTrail(e.f, player.p, player.deck); stepFollower(e.f, plan, player, dt);
     const o = laneOffset(e.f, e.lane, e.off, dt), ef = SHIP ? floorAt(plan, e.f.p, e.f.deck) : (groundAt(e.f.p, player.floor + 1.2) ?? player.floor);
-    e.mesh.visible = e.f.deck === player.deck; e.mesh.position.copy(V(e.f.p[0] + o[0], e.f.p[1] + o[1], ef + TOP - JH / 2));
+    e.mesh.visible = e.f.deck === player.deck; e.mesh.position.copy(V(e.f.p[0] + o[0], e.f.p[1] + o[1], e.full ? ef + FULL_H / 2 : ef + TOP - JH / 2));
+    if (e.full) { const v = e.clips.walk.v; if (e.f.moving && v.paused && started) v.play().catch(() => { }); else if (!e.f.moving && !v.paused) v.pause() }
     e.mesh.rotation.set(0, Math.atan2(camera.position.x - e.mesh.position.x, camera.position.z - e.mesh.position.z), 0);
     extraClip(e, e.f.moving ? 'walk' : 'normal');
   }
