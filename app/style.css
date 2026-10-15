@@ -111,3 +111,5 @@ body.call:not(.showChips) .chips{display:none}#callHome{font-size:20px;line-heig
 .partySlot .stageFg{transform:none!important}.partySlot .stageFg>*{object-position:50% 100%}
 .partyName{position:absolute;left:50%;bottom:calc(max(18px,env(safe-area-inset-bottom)) + 96px);transform:translateX(-50%);z-index:5;font-size:12px;padding:2px 8px;border-radius:10px;background:#0007;opacity:0;transition:opacity .3s}.partySlot.active .partyName{opacity:1;background:#9e83ffcc}
 .partySlot .stageFg>*{object-fit:contain!important;object-position:50% 100%!important}
+#guideBot .stageBg{display:none}#guideBot .stageFg{position:absolute;inset:0;transform:none}#guideBot .stageFg>*{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 100%}
+#guideBot:not(.standin) .gbCore{width:16px;height:16px;margin-left:-8px;border:1px solid #dff8ffaa;background:radial-gradient(circle,#ffffffd0 0,#7fe3ff80 45%,transparent 75%)}#guideBot:not(.standin).live .gbCore{background:radial-gradient(circle,#fff 0,#ff7a7fcc 45%,transparent 80%)}#guideBot:not(.standin) .gbHolo{opacity:.85;background:none}
