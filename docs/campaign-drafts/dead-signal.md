@@ -1,4 +1,4 @@
-# Dead Signal — campaign skeleton (WIP, NOT APPROVED)
+# Dead Signal — campaign skeleton (approved draft to test)
 
 Bones only. Checkpoints that must happen, A to B; everything between them is played live.
 Structure borrowed (not copied) from three proven shapes: the rescue-mission-gone-wrong (Aliens), the
