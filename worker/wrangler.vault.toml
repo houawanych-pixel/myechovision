@@ -12,4 +12,4 @@ ORIGINS = "https://myechovision.com,https://www.myechovision.com"
 [[d1_databases]]
 binding = "DB"
 database_name = "echo-vault"
-database_id = "REPLACE_WITH_ID_FROM_wrangler_d1_create"
+database_id = "d6c54906-73b5-47fd-9fcf-bcbf0ebe1457"
