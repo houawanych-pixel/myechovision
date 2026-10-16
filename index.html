@@ -136,6 +136,32 @@ footer nav{display:flex;gap:18px;letter-spacing:.08em;text-transform:none;font-s
 .rv.in{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}.layer{transform:none!important}.scrollhint::after{animation:none}}
 :focus-visible{outline:2px solid #9fe6ff;outline-offset:3px;border-radius:8px}
+/* Aurora, the floating guide */
+#aurora{position:fixed;right:12px;bottom:18px;z-index:40;width:110px;text-align:center;pointer-events:none;font-family:var(--sans)}
+#aurora .auHolo{pointer-events:auto;position:relative;height:118px;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;z-index:1;filter:drop-shadow(0 0 10px #6cd3ff88);animation:auFloat 4s ease-in-out infinite}
+#aurora .auFig,#aurora .auStage{position:absolute;inset:0}#aurora .auStage{overflow:hidden;border-radius:16px 16px 40% 40%/16px 16px 24px 24px}
+#aurora .stageBg{display:none}#aurora .stageFg{position:absolute;inset:auto 0 auto 0;top:0;height:154%;transform:none}
+#aurora .stageFg>*{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 0}
+#aurora.noVideo .auFig{background:url(app/assets/aurora.webp) 50% 0/100% auto no-repeat;border-radius:16px}
+#aurora .auMic{position:absolute;left:50%;bottom:-6px;width:30px;height:30px;margin-left:-15px;border-radius:50%;display:grid;place-items:center;color:#fff;background:radial-gradient(circle at 50% 35%,#4fc3ff,#1769c9);border:1.5px solid #dff8ff;box-shadow:0 0 12px 3px #6cd3ffaa;transition:transform .3s,opacity .3s;z-index:2;animation:auPulse 2.2s ease-in-out infinite}
+#aurora .auMic svg{width:16px;height:16px}
+#aurora .auRing{position:absolute;left:50%;top:62px;width:84px;height:84px;margin:-42px 0 0 -42px;border-radius:50%;display:grid;place-items:center;color:#ffffff40;background:radial-gradient(circle,#e5484d55,#e5484d99 60%,#ff6b6fcc);border:1.5px solid #ff9a9d;transform:translateY(50px) scale(.36);opacity:0;transition:transform .35s cubic-bezier(.3,1.4,.5,1),opacity .25s;z-index:0}
+#aurora .auRing svg{width:40px;height:40px}
+#aurora.live .auRing{transform:none;opacity:1;animation:auRing 1.6s ease-in-out .35s infinite}#aurora.live .auMic{transform:scale(.2);opacity:0;animation:none}
+#aurora .auLabel{position:relative;z-index:1;margin-top:10px;font-size:11px;line-height:1.2;color:#dff8ff;text-shadow:0 1px 3px #000}
+#aurora .auMove,#aurora .auHide{pointer-events:auto;position:absolute;top:-6px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;line-height:1;color:#dff8ff;background:#0b1626cc;border:1px solid #6cd3ff88;cursor:grab;touch-action:none;z-index:3;padding:0}
+#aurora .auMove{left:-4px}#aurora .auHide{right:-4px;cursor:pointer}
+#aurora .auPanel{pointer-events:auto;position:fixed;left:50%;translate:-50% 0;width:min(380px,100vw - 24px);text-align:left;background:#0d1028f2;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #6cd3ff55;border-radius:16px;padding:12px;box-shadow:0 20px 50px #000a,0 0 30px #6cd3ff22;z-index:41}
+#aurora .auSay{max-height:32vh;overflow:auto;font-size:14.5px;line-height:1.5}#aurora .auSay p{margin:0 0 8px}#aurora .auSay .you{color:var(--dim);font-size:13px}#aurora .auSay .me{color:#eaf6ff}
+#aurora .auAsk{display:flex;gap:8px}#aurora .auAsk input{flex:1;min-width:0;height:42px;border-radius:999px;border:1px solid #ffffff2a;background:#070814;color:#fff;padding:0 14px;font:inherit;font-size:15px}
+#aurora .auAsk button{width:42px;height:42px;border-radius:50%;border:1.5px solid var(--green);background:#0e2a1d;color:#eafff3;font-size:16px}
+#aurora .auQuick{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}#aurora .auQuick button{font:inherit;font-size:12.5px;color:#d7ccff;background:transparent;border:1px solid #8b6cff88;border-radius:999px;padding:5px 10px}
+#aurora.moved{right:auto;bottom:auto}
+#aurora.hello .auLabel{background:#0d1028e6;border:1px solid #6cd3ff66;border-radius:10px;padding:5px 8px;font-size:12px;width:140px;margin-left:-38px}
+#auroraTab{position:fixed;right:12px;bottom:18px;z-index:40;display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;border:1px solid #6cd3ff88;background:#0b1626e6;color:#dff8ff;font:600 13px var(--sans)}#auroraTab svg{width:16px;height:16px}
+@keyframes auFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@keyframes auPulse{0%,100%{box-shadow:0 0 8px 2px #6cd3ff88}50%{box-shadow:0 0 16px 5px #6cd3ffdd}}@keyframes auRing{0%,100%{box-shadow:0 0 10px 2px #e5484d66}50%{box-shadow:0 0 20px 6px #e5484daa}}
+@media(prefers-reduced-motion:reduce){#aurora .auHolo,#aurora .auMic{animation:none}}
+
 </style>
 </head>
 <body>
@@ -274,5 +300,6 @@ The hatch hisses open.
   const io=new IntersectionObserver(es=>es.forEach(e=>e.target.classList.toggle('in',e.isIntersecting)),{rootMargin:'0px 0px -8% 0px',threshold:.12});
   document.querySelectorAll('.rv').forEach(el=>{if(!el.closest('.hero'))io.observe(el)})})();
 </script>
+<script type="module" src="site/aurora.mjs?v=2"></script>
 </body>
 </html>
