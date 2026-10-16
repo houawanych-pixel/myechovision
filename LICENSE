@@ -1,0 +1,18 @@
+My EchoVision — source code licence
+
+Copyright (c) 2026 Hova / My EchoVision (github.com/houawanych-pixel) — https://myechovision.com
+
+The SOURCE CODE in this repository (HTML, CSS, JavaScript and the scripts in tools/ and worker/)
+is licensed under the Creative Commons Attribution 4.0 International licence (CC BY 4.0):
+https://creativecommons.org/licenses/by/4.0/  ·  full legal text: https://creativecommons.org/licenses/by/4.0/legalcode
+
+In plain words: you may use, copy, change and build on the code, for any purpose, as long as you
+give credit. Credit means: name "My EchoVision by Hova", link to https://myechovision.com,
+and say if you changed anything — somewhere people using your version can see it
+(for example the footer, an About page or the README).
+
+This licence covers the code only. It does NOT cover the content listed in NOTICE.md
+(characters, personas, artwork, 3D models, voices, audio, the Echo Vision world and its stories),
+which stays all rights reserved.
+
+Third-party code and models included here keep their own licences; see NOTICE.md.

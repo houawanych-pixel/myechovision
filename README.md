@@ -43,3 +43,9 @@ Logic tests cover loop boundaries, transcript export and scene-aware demo text. 
 The prototype lives in `app/` and uses relative asset paths. Public URL: https://houawanych-pixel.github.io/myechovision/app/
 
 The root `CNAME` (`myechovision.com`) is intentionally removed while the custom domain's DNS/HTTPS is broken. Do not restore it until the domain serves a valid certificate; the value is recoverable from Git history. Code development continues in this repository; the earlier Sites preview is a separate snapshot, not automatically synchronized.
+
+
+## Licence
+
+The **code** is free to use and build on under **CC BY 4.0**: credit *"My EchoVision by Hova"* and link to https://myechovision.com (see `LICENSE`).
+The **content** — characters, personas, artwork, 3D models, voices, audio, the Echo Vision world and its stories — is © Hova / My EchoVision, **all rights reserved**, and is not covered by the code licence (see `NOTICE.md`).
