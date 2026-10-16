@@ -144,6 +144,8 @@ function blocked(p, floor, dx, dy) {
   return false;
 }
 if (!SHIP) {
+  // models straight from generators are often about one unit across: grow them to a walkable size (about 36 m)
+  { const b0 = new THREE.Box3().setFromObject(gltf.scene), s0 = b0.getSize(new THREE.Vector3()), big = Math.max(s0.x, s0.z); if (big > 0 && big < 6) { gltf.scene.scale.multiplyScalar(36 / big); gltf.scene.updateMatrixWorld(true) } }
   const box = new THREE.Box3().setFromObject(gltf.scene), size = box.getSize(new THREE.Vector3()), mid = box.getCenter(new THREE.Vector3());
   const span = Math.max(size.x, size.y, size.z);
   camera.far = Math.max(90, span * 3); camera.updateProjectionMatrix(); scene.fog.near = Math.max(18, span * 0.6); scene.fog.far = Math.max(55, span * 2);
