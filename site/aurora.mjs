@@ -46,7 +46,7 @@ function showTab(){const t=document.createElement('button');t.id='auroraTab';t.t
 function open(on){const p=box.querySelector('.auPanel');p.hidden=!on;box.classList.toggle('open',on);if(!on)return;const r=box.querySelector('.auHolo').getBoundingClientRect();if(r.top+r.height/2>innerHeight/2){p.style.top='auto';p.style.bottom=Math.max(8,innerHeight-r.top+10)+'px'}else{p.style.bottom='auto';p.style.top=(r.bottom+34)+'px'}}
 function tap(){if(listening){stopListening();return}open(true);const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){box.querySelector('.auAsk input').focus();return}
-  try{speechSynthesis?.cancel()}catch{}rec=new SR();rec.lang=navigator.language||'en-US';rec.interimResults=true;rec.continuous=false;
+  try{if(speechSynthesis?.speaking)speechSynthesis.cancel()}catch{}idle();rec=new SR();rec.lang=navigator.language||'en-US';rec.interimResults=true;rec.continuous=false;
   let heard='';rec.onresult=e=>{heard=[...e.results].map(r=>r[0].transcript).join(' ');box.querySelector('.auAsk input').value=heard};
   rec.onend=()=>{const was=listening;stopListening();if(was&&heard.trim()){box.querySelector('.auAsk input').value='';ask(heard.trim())}};
   rec.onerror=()=>{stopListening();box.querySelector('.auAsk input').focus()};
@@ -63,7 +63,23 @@ function offline(q){q=q.toLowerCase();
   if(/private|privacy|safe|data|share/.test(q))return 'Everything is private by default and stays on your own device. Nothing is shared unless you choose to share it.';
   if(/voice|clone|speak/.test(q))return 'Characters can talk in the phone voice right away, or in a cloned voice from a short clip. Only clone voices you have the right to use.';
   return 'My EchoVision lets you create characters, step into worlds, live the adventure, and turn it into a novel or a screenplay. Tap Start Creating to begin.'}
-function say(text){if(!window.speechSynthesis)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text),v=speechSynthesis.getVoices(),en=v.find(x=>/en/i.test(x.lang)&&/female|samantha|zira|aria|jenny|google us english/i.test(x.name))||v.find(x=>x.default&&/^en/i.test(x.lang));if(en)u.voice=en;u.rate=1.02;u.onstart=()=>{try{st?.speaking(true)}catch{}box.classList.add('talking')};u.onend=u.onerror=()=>{try{st?.speaking(false)}catch{}box.classList.remove('talking')};speechSynthesis.speak(u)}catch{}}
+// Speech: pick the voice once (on-device voices first, they start much faster on phones), speak sentence by sentence so the first words come out quickly,
+// and always drift back to idle: when the voice ends, errors, never starts, or the phone forgets to say it finished.
+let voice=null,talkTimer=0,watch=0,speakId=0;
+function pickVoice(){const v=speechSynthesis.getVoices();if(!v.length)return;const en=v.filter(x=>/^en/i.test(x.lang)),nice=x=>/female|samantha|zira|aria|jenny|libby|sonia|google us english/i.test(x.name);voice=en.find(x=>x.localService&&nice(x))||en.find(x=>x.localService&&x.default)||en.find(x=>x.localService)||en.find(nice)||en[0]||null}
+if(window.speechSynthesis){pickVoice();speechSynthesis.addEventListener?.('voiceschanged',pickVoice)}
+function talk(on){clearTimeout(talkTimer);try{st?.speaking(on)}catch{}box?.classList.toggle('talking',on)}
+function idle(){clearInterval(watch);watch=0;talk(false)}
+function say(text){if(!window.speechSynthesis||!text)return;const id=++speakId;
+  if(speechSynthesis.speaking||speechSynthesis.pending)speechSynthesis.cancel();
+  const parts=String(text).match(/[^.!?…]+[.!?…]*\s*/g)||[text];let started=false;
+  parts.forEach((t,i)=>{const u=new SpeechSynthesisUtterance(t.trim());if(voice)u.voice=voice;u.lang=voice?.lang||'en-US';u.rate=1.05;
+    u.onstart=()=>{if(id!==speakId)return;started=true;talk(true)};
+    u.onend=u.onerror=()=>{if(id===speakId&&i===parts.length-1)idle()};
+    speechSynthesis.speak(u)});
+  // Safety nets: back to idle if speech never starts, and once the phone stops speaking even if it never says so.
+  clearInterval(watch);const t0=performance.now(),longest=4000+String(text).length*95;
+  watch=setInterval(()=>{if(id!==speakId){clearInterval(watch);return}const busy=speechSynthesis.speaking||speechSynthesis.pending;if((!busy&&(started||performance.now()-t0>2500))||performance.now()-t0>longest)idle()},300)}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
 
 if(load().hidden)showTab();else build();
