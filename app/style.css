@@ -148,3 +148,6 @@ body.call:not(.showChips) .chips{display:none}#callHome{font-size:20px;line-heig
 .studio pre.transcript{white-space:pre-wrap;word-wrap:break-word;font:inherit;font-size:14px;line-height:1.55;max-height:46vh;overflow:auto;background:#0b1020;border:1px solid #2a3150;border-radius:12px;padding:12px;margin:6px 0}
 .studio textarea.chapter{min-height:42vh;font-size:15px;line-height:1.6}
 .studio .actions{flex-wrap:wrap}
+.worldPack{gap:12px;align-items:center;padding:10px;border:1px solid #ffffff1c;border-radius:14px;background:#0d1024}
+.worldPack img{width:56px;height:56px;border-radius:10px;object-fit:cover;flex:none}
+.worldPack button{flex:none;min-width:84px}
