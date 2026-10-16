@@ -19,25 +19,31 @@ function recorderType(){const MR=globalThis.MediaRecorder;if(!MR)return '';for(c
 
 // Redraws seconds [from,to] of the video as a new clip that plays forward and then backward, so it loops with no jump.
 export async function pingPongClip(file,from,to,{size=400,fps=20,onProgress}={}){
-  const type=recorderType();if(!type)throw Error('This browser cannot make the idle loop. Try Chrome or Safari.');
+  const type=recorderType();if(!type)throw Error('This browser cannot make the loops. Try Chrome or Safari.');
   const url=URL.createObjectURL(file),v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='auto';v.src=url;
   try{await once(v,'loadeddata');
     const sc=Math.min(1,size/Math.max(v.videoWidth,v.videoHeight)),w=Math.round(v.videoWidth*sc/2)*2,h=Math.round(v.videoHeight*sc/2)*2;
+    const cv=document.createElement('canvas');cv.width=w;cv.height=h;const g=cv.getContext('2d');
+    // Grab each frame as a small JPEG (keeps memory low on phones), then play them forward and back into a new clip.
     const frames=[],count=Math.max(2,Math.round((to-from)*fps));
-    for(let i=0;i<count;i++){v.currentTime=Math.min(to,from+i/fps);await once(v,'seeked');frames.push(await createImageBitmap(v,{resizeWidth:w,resizeHeight:h}));onProgress?.(0.6*(i+1)/count)}
+    for(let i=0;i<count;i++){v.currentTime=Math.min(to,from+i/fps);await once(v,'seeked');g.drawImage(v,0,0,w,h);frames.push(await new Promise(r=>cv.toBlob(r,'image/jpeg',0.9)));onProgress?.(0.6*(i+1)/count)}
     const seq=[...frames,...frames.slice(1,-1).reverse()];
-    const cv=document.createElement('canvas');cv.width=w;cv.height=h;const g=cv.getContext('2d');g.drawImage(seq[0],0,0);
+    const first=await createImageBitmap(seq[0]);g.drawImage(first,0,0);first.close?.();
     const stream=cv.captureStream(fps),rec=new MediaRecorder(stream,{mimeType:type,videoBitsPerSecond:2_500_000}),chunks=[];
     rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};const done=new Promise(r=>rec.onstop=r);
     rec.start();const t0=performance.now();
-    for(let i=0;i<seq.length;i++){g.drawImage(seq[i],0,0);onProgress?.(0.6+0.4*(i+1)/seq.length);const wait=t0+(i+1)*1000/fps-performance.now();await new Promise(r=>setTimeout(r,Math.max(0,wait)))}
-    rec.stop();await done;frames.forEach(f=>f.close?.());stream.getTracks().forEach(t=>t.stop());
-    return new File([new Blob(chunks,{type:type.split(';')[0]})],'idle.'+(type.includes('mp4')?'mp4':'webm'),{type:type.split(';')[0]})}
+    for(let i=0;i<seq.length;i++){const bm=await createImageBitmap(seq[i]);g.drawImage(bm,0,0);bm.close?.();onProgress?.(0.6+0.4*(i+1)/seq.length);const wait=t0+(i+1)*1000/fps-performance.now();await new Promise(r=>setTimeout(r,Math.max(0,wait)))}
+    rec.stop();await done;stream.getTracks().forEach(t=>t.stop());
+    const mime=type.split(';')[0];return new File([new Blob(chunks,{type:mime})],'loop.'+(mime.includes('mp4')?'mp4':'webm'),{type:mime})}
   finally{URL.revokeObjectURL(url)}}
 
-// The whole job. Returns {talkEnd, idle} where idle is a File (or null when there is no quiet tail long enough).
+// The whole job. Returns {talking, idle} as Files that both loop with no jump (forward then back), or nulls with a reason.
+// talking: the part where they speak (up to 8 seconds of it); idle: the quiet seconds at the end.
 export async function splitTalkingClip(file,{onProgress}={}){
-  const q=await findQuietTail(file);if(!q)return {talkEnd:null,idle:null,why:'No sound found in that video.'};
-  if(q.tail<1.2)return {talkEnd:null,idle:null,why:`It ends with only ${q.tail.toFixed(1)} seconds of quiet. End it with about 3 quiet seconds to get an idle loop too.`};
+  const q=await findQuietTail(file);if(!q)return {talking:null,idle:null,why:'No sound found in that video.'};
+  const talkTo=Math.max(1.5,Math.min(q.speechEnd||q.len,8)),hasTail=q.tail>=1.2;
+  const step=(a,b)=>p=>onProgress?.(a+(b-a)*p);
+  const talking=await pingPongClip(file,0,talkTo,{fps:15,size:400,onProgress:step(0,hasTail?0.65:1)});
+  if(!hasTail)return {talking,idle:null,why:`It ends with only ${q.tail.toFixed(1)} seconds of quiet. End it with about 3 quiet seconds to get an idle loop too.`};
   const from=Math.min(q.len-0.8,q.speechEnd+0.25),to=Math.max(from+0.8,Math.min(q.len-0.08,from+3.5));
-  const idle=await pingPongClip(file,from,to,{onProgress});return {talkEnd:+(q.speechEnd+0.05).toFixed(2),idle,tail:q.tail}}
+  const idle=await pingPongClip(file,from,to,{onProgress:step(0.65,1)});return {talking,idle,tail:q.tail}}
