@@ -5,6 +5,7 @@
 // Plan coordinates (ship-core.mjs) are x across, y toward the nose, z up; three.js uses (x, z, -y).
 import * as THREE from 'three';
 import { GLTFLoader } from './vendor/three/loaders/GLTFLoader.js';
+import { setupRig } from './rig.mjs?v=1';
 import { MeshoptDecoder } from './vendor/three/libs/meshopt_decoder.module.js';
 import { createTalk } from './ship-talk.mjs?v=5';
 import { buildPlan, slide, walkable, floorAt, roomAt, updateDoors, liftAt, liftNear, liftDoor, createFollower, recordTrail, stepFollower, placeFollower, EYE } from './ship-core.mjs?v=5';
@@ -31,11 +32,13 @@ async function mediaOf(key) {
   if (!/^media-/.test(key)) return { url: key, video: /\.(mp4|webm|mov)(\?|$)/i.test(key) };
   const b = await idbGet(key); return b ? { url: URL.createObjectURL(b), video: /^video\//.test(b.type) } : null;
 }
+// A character with both a 3D body and video clips walks as the 3D body; the Body chip switches to the video (remembered).
+function bodyPref() { try { return localStorage.getItem('ship-body') || '3d' } catch { return '3d' } }
 async function loadConfig() {
-  const JUDY = { name: 'Judy', still: { url: 'assets/judy.webp' }, normal: { url: 'assets/judy-normal.mp4', video: true }, walk: { url: 'assets/judy-walk-knee.mp4', video: true }, walkSound: 'assets/judy-walk-knee.mp3', talk: { url: 'assets/judy-talk.mp4', video: true }, chroma: 'green', spill: 0.8, cut: true };
+  const JUDY = { name: 'Judy', still: { url: 'assets/judy.webp' }, normal: { url: 'assets/judy-normal.mp4', video: true }, walk: { url: 'assets/judy-walk-knee.mp4', video: true }, walkSound: 'assets/judy-walk-knee.mp3', talk: { url: 'assets/judy-talk.mp4', video: true }, chroma: 'green', spill: 0.8, cut: true, model: 'assets/rigs/judy.glb', rigged: true };
   let st = null; try { st = JSON.parse(localStorage.getItem('echo-vision-studio-v2')) } catch { }
   const sid = params.get('session'), sess = sid && st?.sessions?.find(x => x.id === sid);
-  if (!sess) return { world: 'ship', name: 'Walk the ship', partner: JUDY };
+  if (!sess) return { world: 'ship', name: 'Walk the ship', partner: { ...JUDY, hasBody: true, model: bodyPref() === 'video' ? '' : JUDY.model } };
   const scene = st.scenes.find(x => x.id === sess.scene) || {}, c = st.cast.find(x => x.id === sess.partner) || {};
   const partner = c.id === 'judy' ? JUDY : {
     name: c.name || 'Your companion', chroma: c.chroma || 'none', spill: c.spill ?? 0.8, rigged: !!c.rigged, cut: !!c.chroma && c.chroma !== 'none',
@@ -46,6 +49,7 @@ async function loadConfig() {
     const m = st.cast.find(x => x.id === id); if (!m) continue;
     extras.push({ name: m.name, chroma: m.chroma || 'none', spill: m.spill ?? 0.8, still: await mediaOf(m.image), normal: await mediaOf(m.clips?.normal || m.loop), walk: await mediaOf(m.clips?.walkLoop || m.clips?.walk), full: await mediaOf(m.clips?.approach) });
   }
+  partner.hasBody = !!partner.model; if (bodyPref() === 'video') partner.model = '';
   return { world: !scene.world || scene.world === 'ship' ? 'ship' : (await mediaOf(scene.world))?.url || 'ship', name: scene.name || 'Your world', partner, extras };
 }
 const CFG = await loadConfig(), P = CFG.partner, SHIP = CFG.world === 'ship';
@@ -242,11 +246,14 @@ function laneOffset(f, lane, off, dt) {
 const judyOff = [0, 0];
 function extraClip(e, name) { if (e.shown === name) return; e.shown = name; const c = e.clips[name], playing = c && c.v.readyState >= 2 && !c.v.paused; e.mat.uniforms.map.value = playing ? c.tex : (name === 'walk' && e.clips.normal && e.clips.normal.v.readyState >= 2 && !e.clips.normal.v.paused) ? e.clips.normal.tex : e.still }
 // a 3D companion instead of a billboard: scaled to 1.7 m; rigged models play walk and idle animations
-let model = null, mixer = null, acts = {}, actNow = null;
+let model = null, mixer = null, acts = {}, actNow = null, rigTick = null;
 if (P.model) {
   try {
     const g = await loader.loadAsync(P.model); model = g.scene;
-    const b = new THREE.Box3().setFromObject(model), h = b.max.y - b.min.y || 1, wide = Math.max(b.max.x - b.min.x, b.max.z - b.min.z) || 1, k = Math.min(1.7 / h, 2.0 / wide);   // person-sized, even if the model is not a person
+    // a rig with no moves of its own (Tripo): stand it up, face it forward, and give it a built-in breathe and walk
+    if (P.rigged && !g.animations.length) rigTick = setupRig(model);
+    model.updateMatrixWorld(true);
+    const b = new THREE.Box3().setFromObject(model, true), h = b.max.y - b.min.y || 1, wide = Math.max(b.max.x - b.min.x, b.max.z - b.min.z) || 1, k = Math.min(1.7 / h, 2.0 / wide);   // person-sized, even if the model is not a person
     model.scale.setScalar(k); model.position.y = -b.min.y * k;
     const holder = new THREE.Group(); holder.add(model); scene.add(holder); model = holder; judyMesh.visible = false;
     if (P.rigged && g.animations.length) {
@@ -467,7 +474,9 @@ function frame(now) {
     model.visible = judy.deck === player.deck;
     model.position.copy(V(judy.p[0], judy.p[1], jf));
     model.rotation.y = Math.atan2(camera.position.x - model.position.x, camera.position.z - model.position.z);
-    modelAnim(judy.moving ? 'walk' : 'idle'); mixer?.update(dt);
+    modelAnim(judy.moving ? 'walk' : 'idle'); mixer?.update(dt); rigTick?.(dt, judy.moving ? Math.hypot(...judy.vel) : 0, talking);
+    // the body has no face, so while they talk, their talking clip plays in a comms window
+    commsOn = talking && judy.deck === player.deck; if (commsOn) showClip(clips.talk ? 'talk' : 'normal');
   } else {
     judyMesh.visible = judy.deck === player.deck;
     const jo = laneOffset(judy, JUDY_LANE, judyOff, dt); judyMesh.position.copy(V(judy.p[0] + jo[0], judy.p[1] + jo[1], jf + TOP - JH / 2));
@@ -483,7 +492,28 @@ function frame(now) {
     $('where').textContent = deck + (r && !r.lift ? ' · ' + (ROOM_NAMES[r.name] || r.name.replace(/\d|[LR]$/g, '').replace(/^stub4?/, 'Cabin hall')) : r?.lift ? ' · Turbolift' : '');
   } }
   drawRadar(); if (bigmap.style.display === 'block') drawBigMap();
-  if (!NORENDER) renderer.render(scene, camera);
+  if (!NORENDER) { renderer.render(scene, camera); drawComms() }
+}
+
+// ---------- comms window: a 3D body's talking face ----------
+// Rigged bodies have no moving face, so when one speaks we cut to their talking clip in a small comms window
+// (keyed like the billboard) and close it when they finish. Characters without a clip show their picture there.
+let commsOn = false;
+if (P.hasBody) { const b = document.createElement('button'); b.className = 'chip'; b.textContent = P.model ? '🎞 Video' : '🧍 3D'; b.title = 'Switch between the 3D body and the video';
+  b.onclick = () => { try { localStorage.setItem('ship-body', P.model ? 'video' : '3d') } catch { } location.reload() }; $('talkBtn').before(b) }
+const hudScene = new THREE.Scene(), hudCam = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 0, 2);
+const hudFace = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), judyMat); hudFace.position.z = -1; hudScene.add(hudFace);
+const commsBox = document.createElement('div'); commsBox.className = 'comms'; commsBox.innerHTML = `<b>◉ ${P.name.replace(/[<&]/g, '')}</b>`; document.body.append(commsBox);
+function drawComms() {
+  commsBox.style.display = commsOn ? 'block' : 'none'; if (!commsOn) return;
+  const W = innerWidth, H = innerHeight, w = Math.round(Math.min(170, W * 0.36)), h = Math.round(w * 1.5), x = 12, top = 128;
+  commsBox.style.cssText += `;left:${x}px;top:${top}px;width:${w}px;height:${h}px`;
+  const m = judyMat.uniforms.map.value?.image, aw = m?.videoWidth || m?.width || 2, ah = m?.videoHeight || m?.height || 3, a = aw / ah, pa = w / h;
+  hudFace.scale.set(a > pa ? a / pa : 1, a > pa ? 1 : pa / a, 1);
+  const bg = renderer.getClearColor(new THREE.Color()), ba = renderer.getClearAlpha();
+  renderer.setScissorTest(true); renderer.setViewport(x, H - top - h, w, h); renderer.setScissor(x, H - top - h, w, h);
+  renderer.setClearColor(0x0d1626, 1); renderer.clear(); renderer.render(hudScene, hudCam);
+  renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H); renderer.setClearColor(bg, ba);
 }
 
 // ---------- radar and map ----------
@@ -594,4 +624,4 @@ go.onclick = () => {
 };
 if (params.has('autostart')) go.onclick();
 // for checks: window.ship exposes the live state
-window.ship = { plan, player, get judy() { return judy }, get party() { return EXTRAS.map(e => e.f && { p: e.f.p, off: e.off, moving: e.f.moving, visible: e.mesh.visible }) }, ride, camera, renderer, snap() { placeDoors(); placeCamera(); renderer.render(scene, camera); return canvas.toDataURL('image/jpeg', 0.85) } };
+window.ship = { set talking(v) { talking = v }, plan, player, get judy() { return judy }, get party() { return EXTRAS.map(e => e.f && { p: e.f.p, off: e.off, moving: e.f.moving, visible: e.mesh.visible }) }, ride, camera, renderer, snap() { placeDoors(); placeCamera(); renderer.render(scene, camera); return canvas.toDataURL('image/jpeg', 0.85) } };
