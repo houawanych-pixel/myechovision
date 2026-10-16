@@ -8,8 +8,9 @@ A hidden tournament where **humans** and **dragon half-breeds** fight with blade
 ## Roster (so far)
 | Fighter | Kind | Style | Status |
 |---|---|---|---|
-| **Yuki** | Human | Wandering swordswoman: quiet, precise katana, draws and cuts in one motion | Exists in the app (picture, walks). Needs fight clips. New look? see the white robes and straw hat sheet |
-| **The white-robed swordswoman** *(name needed; same woman as the straw-hat sheet)* | Human | Graceful, fast blade; **special: Mirage**, where she splits into a crowd of copies of herself in drifting fog, then they all strike | Picture + 2 special-move clips |
+| **Yuki** | Human | Wandering swordswoman: quiet, precise katana, draws and cuts in one motion | Exists in the app (picture, walks). Needs fight clips. |
+| **The white-robed swordswoman** *(name needed; long black hair, white halter top; her own character, not the straw-hat woman)* | Human | Graceful, fast blade; **special: Mirage**, where she splits into a crowd of copies of herself in drifting fog, then they all strike | Picture + 2 special-move clips |
+| **The straw-hat swordswoman** *(name needed)* | Human | White and sage robes, conical straw hat, white-wrapped katana at the sash; calm and still | Character sheet (front, side, back, close-ups) |
 | **The armoured samurai** *(name needed)* | Human | Heavy blue-black armour, long katana, big two-handed cuts | Picture + a 6 s beach action clip |
 | **The Ryu-style fighter** *(name needed)* | Human | **No sword**: punch, kick, uppercut, **fireball** | To make |
 | **Dragon half-breeds** *(names needed)* | Half-dragon | Scales, horns or wings, claws plus blades, fire breath as the "fireball" | To make |
@@ -74,5 +75,5 @@ The 6-second clip of the armoured samurai on the beach looks great as a **traile
 
 ## Still needed from you
 - Names for the armoured samurai, the Ryu-style fighter and the dragon half-breeds.
-- Is the white robes and straw hat woman **Yuki's new look**, or a new fighter?
+- Is the straw-hat swordswoman a new fighter, or a new look for Yuki?
 - How many fighters in the first tournament (8 is a classic bracket).
