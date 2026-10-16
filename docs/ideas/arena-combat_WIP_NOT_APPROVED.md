@@ -1,6 +1,6 @@
 # Arena Combat & Shared Worlds (idea draft, not approved, not built)
 
-*Status: someday idea, captured 15 Oct 2026. Build after the prototype's foundation is solid.*
+*Status: captured 15 Oct 2026. **First duel built 16 Oct 2026:** `app/duel.html` — you vs Kasumi on the Dragon Temple floor (lock-on, ◀ ▶ sidestep / ▲ ▼ step, Strike, life meters, hurt, KO, victory). Open it from Cast → Worlds → The Kumite → ⚔ Fight Kasumi.*
 
 ## The idea in one line
 Bring your character into someone's world (for example "Bob's Tournament, a My EchoVision"), meet their cast, and fight through it. It's a duel decided by **positioning**, not button-mashing, made from the same clips every character already has.

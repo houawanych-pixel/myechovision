@@ -1,0 +1,37 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#120a0a"><title>The Kumite — Duel</title>
+<script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js"}}</script>
+<style>
+:root{color-scheme:dark;--panel:rgba(18,12,14,.82);--line:#5a3a2a;--text:#f4ece4;--gold:#f2c46d;--red:#e2463c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#120a0a;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+#view{position:fixed;inset:0;width:100%;height:100%;display:block}
+.top{position:fixed;left:0;right:0;top:0;padding:max(10px,env(safe-area-inset-top)) 12px 8px;display:grid;grid-template-columns:1fr 1fr;gap:10px;pointer-events:none}
+.top a{pointer-events:auto;grid-column:1/-1;justify-self:start;color:var(--text);text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px}
+.bar{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 8px}
+.bar b{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.bar i{display:block;height:9px;border-radius:5px;background:#3a2222;overflow:hidden}.bar i s{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ffcf6b,#e2463c);transition:width .25s}
+.bar.them{text-align:right}.bar.them i s{margin-left:auto;background:linear-gradient(90deg,#e2463c,#ffcf6b)}
+#msg{position:fixed;left:50%;top:30%;transform:translate(-50%,-50%);font:800 clamp(28px,8vw,56px)/1 system-ui,sans-serif;letter-spacing:.06em;color:var(--gold);text-shadow:0 3px 18px #000,0 0 30px #e2463c88;pointer-events:none;opacity:0;transition:opacity .2s;text-align:center;white-space:nowrap}
+#line{position:fixed;left:50%;bottom:calc(178px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:min(92vw,520px);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:15px;display:none;text-align:center}
+#flash{position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle,transparent 40%,#e2463c99);opacity:0;transition:opacity .25s}
+#slash{position:fixed;left:50%;top:50%;width:70vmin;height:6px;margin:-3px 0 0 -35vmin;background:linear-gradient(90deg,transparent,#fff,transparent);transform:rotate(-28deg) scaleX(0);opacity:0;pointer-events:none;filter:drop-shadow(0 0 8px #9ff)}
+#slash.on{animation:sl .22s ease-out}@keyframes sl{0%{transform:rotate(-28deg) scaleX(.1);opacity:1}100%{transform:rotate(-28deg) scaleX(1.2);opacity:0}}
+.pad{position:fixed;left:0;right:0;bottom:0;padding:10px 14px max(14px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:flex-end;pointer-events:none}
+.pad button{pointer-events:auto;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:16px;font:700 20px system-ui;width:62px;height:62px;touch-action:none}
+.pad button:active,.pad button.down{background:#3a2420;border-color:var(--gold)}
+.dpad{display:grid;grid-template-columns:repeat(3,62px);grid-template-rows:repeat(2,62px);gap:6px}
+.dpad [data-k=up]{grid-column:2}.dpad [data-k=left]{grid-column:1;grid-row:2}.dpad [data-k=down]{grid-column:2;grid-row:2}.dpad [data-k=right]{grid-column:3;grid-row:2}
+#strike{width:110px!important;height:110px!important;border-radius:50%!important;font-size:22px!important;border:2px solid var(--gold)!important;box-shadow:0 0 24px #f2c46d55}
+.start{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#2a1414ee,#0a0606f5);z-index:5;padding:20px;text-align:center}
+.start h1{font:800 clamp(34px,10vw,64px)/1 Georgia,serif;margin:0 0 6px;color:var(--gold);letter-spacing:.04em}
+.start p{max-width:420px;color:#d8c8bc;line-height:1.5;margin:10px auto}
+.start button{font:700 18px system-ui;padding:14px 30px;border-radius:999px;border:2px solid var(--gold);background:#3a1a14;color:#fff;margin-top:10px}
+.start button:disabled{opacity:.5}
+</style></head><body>
+<canvas id="view"></canvas>
+<div class="top"><a href="./">← My EchoVision</a><div class="bar"><b>You</b><i><s id="hpMe"></s></i></div><div class="bar them"><b id="foeName">Kasumi</b><i><s id="hpThem"></s></i></div></div>
+<div id="flash"></div><div id="slash"></div><div id="msg"></div><div id="line"></div>
+<div class="pad"><div class="dpad"><button data-k="up" aria-label="Step in">▲</button><button data-k="left" aria-label="Sidestep left">◀</button><button data-k="down" aria-label="Step back">▼</button><button data-k="right" aria-label="Sidestep right">▶</button></div><button id="strike" aria-label="Strike">⚔<br><small style="font-size:12px">Strike</small></button></div>
+<div class="start" id="start"><div><h1>The Kumite</h1><p><b>Kasumi</b>, the mist swordswoman, waits on the Dragon Temple floor.</p><p>Sidestep (◀ ▶) or step back when she swings to make her miss. Step in close and <b>Strike</b> to land your blow. First to empty loses.<br><small>Keys: arrows / WASD to move, Space to strike.</small></p><button id="go" disabled>Loading the arena…</button></div></div>
+<script type="module" src="duel.mjs?v=1"></script>
+</body></html>
