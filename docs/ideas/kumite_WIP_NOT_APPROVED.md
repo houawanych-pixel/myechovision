@@ -9,6 +9,7 @@ A hidden tournament where **humans** and **dragon half-breeds** fight with blade
 | Fighter | Kind | Style | Status |
 |---|---|---|---|
 | **Yuki** | Human | Wandering swordswoman: quiet, precise katana, draws and cuts in one motion | Exists in the app (picture, walks). Needs fight clips. New look? see the white robes and straw hat sheet |
+| **The white-robed swordswoman** *(name needed; same woman as the straw-hat sheet)* | Human | Graceful, fast blade; **special: Mirage**, where she splits into a crowd of copies of herself in drifting fog, then they all strike | Picture + 2 special-move clips |
 | **The armoured samurai** *(name needed)* | Human | Heavy blue-black armour, long katana, big two-handed cuts | Picture + a 6 s beach action clip |
 | **The Ryu-style fighter** *(name needed)* | Human | **No sword**: punch, kick, uppercut, **fireball** | To make |
 | **Dragon half-breeds** *(names needed)* | Half-dragon | Scales, horns or wings, claws plus blades, fire breath as the "fireball" | To make |
@@ -37,6 +38,14 @@ Length: [3 to 4] seconds. Vertical portrait 2:3, 720 x 1080. Sound: only the act
 - Hurt: struck, her hat tips, she staggers back a step and steadies.
 - Knockout: struck hard, she drops to one knee, then falls to her side.
 - Victory: sheathes the sword slowly and bows her head, the hat hiding her eyes.
+
+### The white-robed swordswoman: moves
+- Attack 1: a quick one-handed slash, white sleeves trailing.
+- Attack 2: a leaping cut, landing in a crouch.
+- **Special: Mirage**. Fog rolls in, she multiplies into many copies, and they all strike. Her two clips show this. **Use clip 1** (sword drawn, fog, clones spreading): it reads as an attack. Clip 2 is lighter and dance-like.
+- Hurt, Knockout, Victory as the template.
+
+**Specials are cinematics.** A special move doesn't need green screen or a loop. When she lands it, the fight cuts to her full-screen special clip (widescreen, real background, like these two), then back to the duel and the damage lands. So her two clips can be used as they are; other fighters' specials can be made the same way (cinematic, about 5–10 s, widescreen).
 
 ### The armoured samurai: moves
 - Attack 1: raises the long katana overhead with both hands and brings it down in a heavy cut toward the camera.
