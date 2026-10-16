@@ -9,7 +9,7 @@ A hidden tournament where **humans** and **dragon half-breeds** fight with blade
 | Fighter | Kind | Style | Status |
 |---|---|---|---|
 | **Yuki** | Human | Wandering swordswoman: quiet, precise katana, draws and cuts in one motion | Exists in the app (picture, walks). Needs fight clips. |
-| **Celine** *(long black hair, white halter top; her own character, not the straw-hat woman)* | Human | Graceful, fast blade; **special: Mirage**, where she splits into a crowd of copies of herself in drifting fog, then they all strike | Picture + 2 special-move clips |
+| **Kasumi** (霞, "mist") *(long black hair, white halter top; her own character, not the straw-hat woman)* | Human | Graceful, fast blade; **special: Mirage**, where she splits into a crowd of copies of herself in drifting fog, then they all strike | Picture + 2 special-move clips |
 | **The straw-hat swordswoman** *(name needed)* | Human | White and sage robes, conical straw hat, white-wrapped katana at the sash; calm and still | Character sheet (front, side, back, close-ups) |
 | **The armoured samurai** *(name needed)* | Human | Heavy blue-black armour, long katana, big two-handed cuts | Picture + a 6 s beach action clip |
 | **The Ryu-style fighter** *(name needed)* | Human | **No sword**: punch, kick, uppercut, **fireball** | To make |
@@ -40,7 +40,7 @@ Length: [3 to 4] seconds. Vertical portrait 2:3, 720 x 1080. Sound: only the act
 - Knockout: struck hard, she drops to one knee, then falls to her side.
 - Victory: sheathes the sword slowly and bows her head, the hat hiding her eyes.
 
-### Celine: moves
+### Kasumi: moves
 - Attack 1: a quick one-handed slash, white sleeves trailing.
 - Attack 2: a leaping cut, landing in a crouch.
 - **Special: Mirage**. Fog rolls in, she multiplies into many copies, and they all strike. Her two clips show this. **Use clip 1** (sword drawn, fog, clones spreading): it reads as an attack. Clip 2 is lighter and dance-like.
