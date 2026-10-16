@@ -234,7 +234,7 @@ const EXTRAS = (CFG.extras || []).map((X, i) => {
   const mat = new THREE.ShaderMaterial({ uniforms: { map: { value: xstill }, spill: { value: X.spill ?? 0.8 }, light: { value: 1.0 }, key: { value: X.chroma === 'blue' ? 2 : X.chroma === 'green' ? 1 : 0 }, fadeBottom: { value: full ? 0.0 : 0.3 } }, vertexShader: KEY_VS, fragmentShader: KEY_FS, transparent: true, depthWrite: false });
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(full ? FULL_H * 0.66 : JW, full ? FULL_H : JH), mat); mesh.renderOrder = 9 - i; scene.add(mesh);
   for (const c of Object.values(xc)) c.v.addEventListener('loadedmetadata', () => { if (c.v.videoWidth) mesh.scale.x = (c.v.videoWidth / c.v.videoHeight) / (full ? 0.66 : 400 / 736) }, { once: true });
-  return { X, full, clips: xc, still: xstill, mat, mesh, f: null, lane: i === 0 ? 0.75 : 0, gap: i === 0 ? 1.45 : 2.7, off: [0, 0], shown: null };
+  return { X, keyed: !!X.chroma && X.chroma !== 'none', full, clips: xc, still: xstill, mat, mesh, f: null, lane: i === 0 ? 0.75 : 0, gap: i === 0 ? 1.45 : 2.7, off: [0, 0], shown: null };
 });
 const JUDY_LANE = EXTRAS.length ? -0.75 : 0;
 // A sideways nudge across the path to the player, eased, and only where there is floor for it.
@@ -453,7 +453,7 @@ function frame(now) {
   for (const e of EXTRAS) {
     if (!e.f) continue; recordTrail(e.f, player.p, player.deck); stepFollower(e.f, plan, player, dt);
     const o = laneOffset(e.f, e.lane, e.off, dt), ef = PLAN ? floorAt(plan, e.f.p, e.f.deck) : (groundAt(e.f.p, player.floor + 1.2) ?? player.floor);
-    e.mesh.visible = e.f.deck === player.deck; e.mesh.position.copy(V(e.f.p[0] + o[0], e.f.p[1] + o[1], e.full ? ef + FULL_H / 2 : ef + TOP - JH / 2));
+    e.mesh.visible = e.keyed && e.f.deck === player.deck;   // only cut-out (green-screen) clips walk with you e.mesh.position.copy(V(e.f.p[0] + o[0], e.f.p[1] + o[1], e.full ? ef + FULL_H / 2 : ef + TOP - JH / 2));
     if (e.full) { const v = e.clips.walk.v; if (e.f.moving && v.paused && started) v.play().catch(() => { }); else if (!e.f.moving && !v.paused) v.pause() }
     e.mesh.rotation.set(0, Math.atan2(camera.position.x - e.mesh.position.x, camera.position.z - e.mesh.position.z), 0);
     extraClip(e, e.f.moving ? 'walk' : 'normal');
@@ -477,6 +477,9 @@ function frame(now) {
     modelAnim(judy.moving ? 'walk' : 'idle'); mixer?.update(dt); rigTick?.(dt, judy.moving ? Math.hypot(...judy.vel) : 0, talking);
     // the body has no face, so while they talk, their talking clip plays in a comms window
     commsOn = talking && judy.deck === player.deck; if (commsOn) showClip(clips.talk ? 'talk' : 'normal');
+  } else if (INTERCOM) {
+    // no 3D body and no green-screen clip: a picture walking beside you looks wrong, so they are on a call instead
+    judyMesh.visible = false; commsOn = true; showClip(talking && clips.talk ? 'talk' : 'normal');
   } else {
     judyMesh.visible = judy.deck === player.deck;
     const jo = laneOffset(judy, JUDY_LANE, judyOff, dt); judyMesh.position.copy(V(judy.p[0] + jo[0], judy.p[1] + jo[1], jf + TOP - JH / 2));
@@ -499,17 +502,21 @@ function frame(now) {
 // Rigged bodies have no moving face, so when one speaks we cut to their talking clip in a small comms window
 // (keyed like the billboard) and close it when they finish. Characters without a clip show their picture there.
 let commsOn = false;
+// A partner with no 3D body and no green-screen clip is shown as a call on a screen, never as a flat picture in the room.
+const INTERCOM = !model && !P.cut; if (INTERCOM) judyMat.uniforms.fadeBottom.value = 0;
 if (P.hasBody) { const b = document.createElement('button'); b.className = 'chip'; b.textContent = P.model ? '🎞 Video' : '🧍 3D'; b.title = 'Switch between the 3D body and the video';
   b.onclick = () => { try { localStorage.setItem('ship-body', P.model ? 'video' : '3d') } catch { } location.reload() }; $('talkBtn').before(b) }
 const hudScene = new THREE.Scene(), hudCam = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 0, 2);
 const hudFace = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), judyMat); hudFace.position.z = -1; hudScene.add(hudFace);
-const commsBox = document.createElement('div'); commsBox.className = 'comms'; commsBox.innerHTML = `<b>◉ ${P.name.replace(/[<&]/g, '')}</b>`; document.body.append(commsBox);
+const commsBox = document.createElement('div'); commsBox.className = 'comms'; commsBox.innerHTML = `<b>◉ ${P.name.replace(/[<&]/g, '')}</b>`; let commsTalk = null; document.body.append(commsBox);
 function drawComms() {
   commsBox.style.display = commsOn ? 'block' : 'none'; if (!commsOn) return;
-  const W = innerWidth, H = innerHeight, w = Math.round(Math.min(170, W * 0.36)), h = Math.round(w * 1.5), x = 12, top = 128;
+  if (commsTalk !== talking) { commsTalk = talking; commsBox.classList.toggle('live', !!talking); commsBox.querySelector('b').textContent = `◉ ${P.name}${INTERCOM && !talking ? ' · on call' : ''}` }
+  const m0 = judyMat.uniforms.map.value?.image, r0 = (m0?.videoHeight || m0?.height || 3) / (m0?.videoWidth || m0?.width || 2);
+  const W = innerWidth, H = innerHeight, w = Math.round(Math.min(160, W * 0.3)), h = Math.round(Math.min(w * 1.5, Math.max(w, w * r0)) + 22), x = W - w - 12, top = 172;   // right side under the radar, shaped like the picture
   commsBox.style.cssText += `;left:${x}px;top:${top}px;width:${w}px;height:${h}px`;
   const m = judyMat.uniforms.map.value?.image, aw = m?.videoWidth || m?.width || 2, ah = m?.videoHeight || m?.height || 3, a = aw / ah, pa = w / h;
-  hudFace.scale.set(a > pa ? a / pa : 1, a > pa ? 1 : pa / a, 1);
+  hudFace.scale.set(a > pa ? 1 : a / pa, a > pa ? pa / a : 1, 1);   // whole picture, never stretched or cropped
   const bg = renderer.getClearColor(new THREE.Color()), ba = renderer.getClearAlpha();
   renderer.setScissorTest(true); renderer.setViewport(x, H - top - h, w, h); renderer.setScissor(x, H - top - h, w, h);
   renderer.setClearColor(0x0d1626, 1); renderer.clear(); renderer.render(hudScene, hudCam);
