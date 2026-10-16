@@ -1,7 +1,7 @@
 // Aurora on the homepage: the same floating android guide as in the app.
 // Upper body only, drag her anywhere (or use the ✥ handle), tap her to ask anything by voice or by typing.
 import {createStage} from '../app/stage.mjs?v=15';
-import * as brain from '../app/brain.mjs?v=21';
+import * as brain from '../app/brain.mjs?v=22';
 
 const KEY='mev-aurora-home',A='app/assets/';
 const load=()=>{try{return JSON.parse(localStorage.getItem(KEY))||{}}catch{return {}}},keep=o=>{try{localStorage.setItem(KEY,JSON.stringify({...load(),...o}))}catch{}};
