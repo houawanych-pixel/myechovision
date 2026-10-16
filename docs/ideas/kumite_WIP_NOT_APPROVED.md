@@ -41,6 +41,7 @@ Length: [3 to 4] seconds. Vertical portrait 2:3, 720 x 1080. Sound: only the act
 - Victory: sheathes the sword slowly and bows her head, the hat hiding her eyes.
 
 ### Kasumi: moves
+*Fight clips made: Attack 1 and Hurt (in `app/assets/km-kasumi-*.mp4`), from the square fight picture with her katana already drawn in both hands (no scabbard, so the sword can't wander).*
 *Fight outfit: white halter top, white miniskirt, white heels, black-scabbard katana (her square 1:1 fight picture). Her talking picture wears white trousers; that's fine, the fight clips all start from the fight picture.*
 - Attack 1: a quick one-handed slash, white sleeves trailing.
 - Attack 2: a leaping cut, landing in a crouch.
