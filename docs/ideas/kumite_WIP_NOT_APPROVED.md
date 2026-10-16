@@ -9,7 +9,7 @@ A hidden tournament where **humans** and **dragon half-breeds** fight with blade
 | Fighter | Kind | Style | Status |
 |---|---|---|---|
 | **Yuki** | Human | Wandering swordswoman: quiet, precise katana, draws and cuts in one motion | Exists in the app (picture, walks). Needs fight clips. |
-| **Kasumi** (霞, "mist") *(long black hair, white halter top; her own character, not the straw-hat woman)* | Human | Graceful, fast blade; **special: Mirage**, where she splits into a crowd of copies of herself in drifting fog, then they all strike | Picture + 2 special-move clips |
+| **Kasumi** (霞, "mist") *(long black hair, white halter top; her own character, not the straw-hat woman)* | Human | Graceful, fast blade; **special: Mirage**, where she splits into a crowd of copies of herself in drifting fog, then they all strike | **In the app** (Cast → Worlds to load → The Kumite): 2:3 picture, voice, talking + idle loops. Has a 1:1 fight picture. Mirage clips kept as cinematics |
 | **The straw-hat swordswoman** *(name needed)* | Human | White and sage robes, conical straw hat, white-wrapped katana at the sash; calm and still | Character sheet (front, side, back, close-ups) |
 | **The armoured samurai** *(name needed)* | Human | Heavy blue-black armour, long katana, big two-handed cuts | Picture + a 6 s beach action clip |
 | **The Ryu-style fighter** *(name needed)* | Human | **No sword**: punch, kick, uppercut, **fireball** | To make |
