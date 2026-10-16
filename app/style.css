@@ -137,3 +137,14 @@ body.call:not(.showChips) .chips{display:none}#callHome{font-size:20px;line-heig
 #guideBot .gbRing svg{width:38px;height:38px}
 @keyframes gbRing{0%,100%{box-shadow:0 0 10px 2px #e5484d66}50%{box-shadow:0 0 20px 6px #e5484daa}}
 #guideBot .gbMove{pointer-events:auto;position:absolute;top:-6px;left:-4px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;line-height:1;color:#dff8ff;background:#0b1626cc;border:1px solid #6cd3ff88;cursor:grab;touch-action:none;z-index:3}
+/* Green = go (the main action). Purple outline = advanced. */
+.go{flex:1.2;background:linear-gradient(130deg,#3ee98a,#17b65e);color:#04150b;border:1px solid #7ff5b2;font-weight:800;box-shadow:0 8px 24px #22d47a40}
+.go:disabled{opacity:.75}
+.adv{flex:1;background:transparent;border:1px solid #8d74f0;color:#d7ccff;font-weight:700}
+/* Author Studio */
+.studio .chapChips,.studio .tabs{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+.studio .tabs{margin-top:12px}
+.studio .mini.on{background:#6852d8;border-color:#b39df4;color:#fff}
+.studio pre.transcript{white-space:pre-wrap;word-wrap:break-word;font:inherit;font-size:14px;line-height:1.55;max-height:46vh;overflow:auto;background:#0b1020;border:1px solid #2a3150;border-radius:12px;padding:12px;margin:6px 0}
+.studio textarea.chapter{min-height:42vh;font-size:15px;line-height:1.6}
+.studio .actions{flex-wrap:wrap}
