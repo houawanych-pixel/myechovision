@@ -5,7 +5,7 @@
 // Plan coordinates (ship-core.mjs) are x across, y toward the nose, z up; three.js uses (x, z, -y).
 import * as THREE from 'three';
 import { GLTFLoader } from './vendor/three/loaders/GLTFLoader.js';
-import { setupRig } from './rig.mjs?v=1';
+import { setupRig } from './rig.mjs?v=2';
 import { MeshoptDecoder } from './vendor/three/libs/meshopt_decoder.module.js';
 import { createTalk } from './ship-talk.mjs?v=5';
 import { buildPlan, slide, walkable, floorAt, roomAt, updateDoors, liftAt, liftNear, liftDoor, createFollower, recordTrail, stepFollower, placeFollower, EYE } from './ship-core.mjs?v=5';
@@ -41,7 +41,7 @@ async function loadConfig() {
   if (!sess) return { world: 'ship', name: 'Walk the ship', partner: { ...JUDY, hasBody: true, model: bodyPref() === 'video' ? '' : JUDY.model } };
   const scene = st.scenes.find(x => x.id === sess.scene) || {}, c = st.cast.find(x => x.id === sess.partner) || {};
   const partner = c.id === 'judy' ? JUDY : {
-    name: c.name || 'Your companion', chroma: c.chroma || 'none', spill: c.spill ?? 0.8, rigged: !!c.rigged, cut: !!c.chroma && c.chroma !== 'none',
+    name: c.name || 'Your companion', chroma: c.chroma || 'none', spill: c.spill ?? 0.8, rigged: !!c.rigged, rigGentle: !!c.rigGentle, cut: !!c.chroma && c.chroma !== 'none',
     model: (await mediaOf(c.model))?.url || '', still: await mediaOf(c.image), normal: await mediaOf(c.clips?.normal || c.loop), walk: await mediaOf(c.clips?.walkLoop || c.clips?.walk), walkSound: (await mediaOf(c.walkSound))?.url || '', talk: await mediaOf(c.clips?.talking)
   };
   const extras = [];
@@ -251,7 +251,7 @@ if (P.model) {
   try {
     const g = await loader.loadAsync(P.model); model = g.scene;
     // a rig with no moves of its own (Tripo): stand it up, face it forward, and give it a built-in breathe and walk
-    if (P.rigged && !g.animations.length) rigTick = setupRig(model);
+    if (P.rigged && !g.animations.length) rigTick = setupRig(model, { gentle: P.rigGentle });
     model.updateMatrixWorld(true);
     const b = new THREE.Box3().setFromObject(model, true), h = b.max.y - b.min.y || 1, wide = Math.max(b.max.x - b.min.x, b.max.z - b.min.z) || 1, k = Math.min(1.7 / h, 2.0 / wide);   // person-sized, even if the model is not a person
     model.scale.setScalar(k); model.position.y = -b.min.y * k;
