@@ -7,13 +7,15 @@ const VS='attribute vec2 p;varying vec2 v;void main(){v=vec2((p.x+1.0)/2.0,(1.0-
 // `prev` holds the last picture of the clip being left; `fade` runs 0 to 1 to dissolve from it into the new clip.
 const FS='precision mediump float;uniform sampler2D t;uniform sampler2D prev;uniform float fade;uniform float blue;uniform float sim;uniform float soft;uniform float spill;varying vec2 v;void main(){vec4 c=texture2D(t,v);float k=blue>0.5?c.b-max(c.r,c.g):c.g-max(c.r,c.b);float a=1.0-smoothstep(sim,sim+soft,k);vec3 o=c.rgb;if(blue>0.5){o.b=min(o.b,mix(o.b,max(o.r,o.g),spill));}else{o.g=min(o.g,mix(o.g,max(o.r,o.b),spill));}gl_FragColor=mix(texture2D(prev,vec2(v.x,1.0-v.y)),vec4(o*a,a),fade);}';
 export const isVideo=type=>/^video\//.test(type||'');
-function element(clip){if(isVideo(clip.type)){const v=document.createElement('video');v.muted=!clip.sound;v.playsInline=true;v.preload='auto';v.src=clip.src;return v}const i=new Image();i.decoding='async';i.src=clip.src;return i}
+function element(clip){if(isVideo(clip.type)){const v=document.createElement('video');v.muted=!clip.sound;v.playsInline=true;v.preload='auto';v.src=clip.src;if(clip.to>0)endAt(v,clip.to);return v}const i=new Image();i.decoding='async';i.src=clip.src;return i}
 const ready=el=>el.tagName==='VIDEO'?el.readyState>=2&&el.videoWidth>0:el.complete&&el.naturalWidth>0;
 const size=el=>el.tagName==='VIDEO'?[el.videoWidth,el.videoHeight]:[el.naturalWidth,el.naturalHeight];
 
 // Makes a sound loop without a gap or click: the last moment is cross-faded into the first, so the join is inaudible.
 function seamless(ctx,buf){const rate=buf.sampleRate,fade=Math.min(Math.floor(rate*0.4),Math.floor(buf.length/4));if(fade<64)return buf;const len=buf.length-fade,out=ctx.createBuffer(buf.numberOfChannels,len,rate);for(let ch=0;ch<buf.numberOfChannels;ch++){const a=buf.getChannelData(ch),o=out.getChannelData(ch);for(let i=0;i<len-fade;i++)o[i]=a[i+fade];for(let i=0;i<fade;i++){const t=i/fade;o[len-fade+i]=a[len+i]*(1-t)+a[i]*t}}return out}
 // host: an element to fill. Returns the controls used by the chat screen.
+// Plays only the first part of a clip (e.g. the talking part of a clip that ends with quiet seconds): jumps back to the start at `to`.
+function endAt(v,to){const check=()=>{if(v.currentTime>=to){if(v.loop)v.currentTime=0;else{v.pause();v.dispatchEvent(new Event('ended'))}}};v.addEventListener('timeupdate',check);if(v.requestVideoFrameCallback){const tick=()=>{check();v.requestVideoFrameCallback(tick)};v.requestVideoFrameCallback(tick)}}
 export function createStage(host){
   const bgBox=document.createElement('div'),fgBox=document.createElement('div');bgBox.className='stageBg';fgBox.className='stageFg';host.prepend(fgBox);host.prepend(bgBox);
   let actx=null,amb=null,gain=null,ambVol=0.5,wake=null;

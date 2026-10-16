@@ -97,3 +97,21 @@ Camera: fixed waist-up shot, steady, no cuts. About 10 to 12 seconds.
 - Actions get a button in chat, and play when the player asks, for example "dance" or "dance again".
 - A video plays once and returns to Normal. A picture is held for a few seconds.
 - With background removal on, the character stands in front of the scene's picture or video.
+
+## One clip, three uses (voice + talking loop + idle loop)
+
+The quickest way to bring a character to life is one talking video that ends with a few quiet seconds.
+
+**Make it:** in the voice step, tap *Copy prompt*. The prompt now asks for about 13 to 15 seconds: the character says the line, then stays in place for **3 more seconds, calm and quiet** (mouth closed, gentle breathing, a blink, the slightest movement, same framing and background).
+
+**Drop it in** (character editor → *Upload a voice*, or the voice clone step) with *"also make their talking loop and idle loop"* ticked. The app, on the phone:
+
+1. **Voice:** pulls the sound out and clones it (as before).
+2. **Talking loop:** keeps the video, but only plays it up to where the talking stops (found from the sound), so the quiet ending never shows while they talk.
+3. **Idle loop:** takes the quiet ending, redraws it as a short clip that plays forward and then backward, so it loops with no jump, and sets it as their idle.
+
+If the video ends with less than about 1.2 seconds of quiet, you still get the voice and the talking loop, and the still picture stays their idle until you add an idle clip.
+
+Files: the app only keeps the video and the clips it makes; no WAV files. Videos over 60 MB still give the voice but are not kept as loops.
+
+For characters made outside the app (the built-in pilots, for example), the same rule applies: end the talking clip with 3 quiet seconds, and the idle can be cut from that tail.
