@@ -19,7 +19,7 @@ export function setupRig(root, { gentle = false } = {}) {
   const LEG = gentle ? 0.38 : 1, KNEE = gentle ? 0.25 : 1, ARM = gentle ? 0.5 : 1;
   const B = {}; root.traverse(b => { if (b.isBone) B[b.name.toLowerCase().replace(/[^a-z0-9]/g, '')] = b });
   const get = (...names) => names.map(n => B[n]).find(Boolean);
-  const L = get('lupperarm', 'leftarm', 'upperarml'), R = get('rupperarm', 'rightarm', 'upperarmr');
+  const L = get('lupperarm', 'leftupperarm', 'leftarm', 'upperarml'), R = get('rupperarm', 'rightupperarm', 'rightarm', 'upperarmr');
   if (!L || !R) return null;
   root.updateMatrixWorld(true);
   // Face the camera: with the character facing +Z, its left shoulder sits at +X.
