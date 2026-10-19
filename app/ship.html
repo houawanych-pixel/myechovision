@@ -18,8 +18,9 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 .knob b.l{left:2px;border-right-color:#e8ecf5}.knob b.r{right:2px;border-left-color:#e8ecf5}
 .knob i{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:#fff;box-shadow:0 0 16px rgba(144,224,228,.8),0 4px 14px rgba(0,0,0,.35);transition:transform .08s}
 .knob.on i{transition:none}
+.knob.look{left:auto;right:calc(max(22px,env(safe-area-inset-right)) + 66px);margin:0 -66px -66px 0;border-color:rgba(144,224,228,.9);background:rgba(144,224,228,.12)}
 .hint{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:max(26px,env(safe-area-inset-bottom));max-width:min(46vw,260px);text-align:right;font-size:13px;line-height:1.35;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 12px;pointer-events:none;transition:opacity .6s}
-.call,.panel{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(max(26px,env(safe-area-inset-bottom)) + 96px);display:none}
+.call,.panel{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(max(26px,env(safe-area-inset-bottom)) + 168px);display:none}
 .call{border:0;border-radius:16px;padding:14px 18px;background:var(--amber);color:#1b1305;font-weight:700;font-size:16px;box-shadow:0 6px 24px rgba(0,0,0,.4)}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:12px;min-width:150px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
 .panel h3{margin:0 0 8px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
@@ -55,9 +56,35 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 .bigmap .title{position:absolute;left:0;right:0;top:max(16px,env(safe-area-inset-top));text-align:center;font-weight:700;letter-spacing:.08em;color:var(--cyan)}
 .bigmap .close{position:absolute;right:16px;top:max(12px,env(safe-area-inset-top));border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;width:42px;height:42px;font-size:20px}
 .comms{position:fixed;display:none;z-index:6;border:1.5px solid #90e0e4;border-radius:12px;box-shadow:0 0 22px #90e0e455,inset 0 0 0 1px #0008;pointer-events:none;overflow:hidden}.comms.live{border-color:#7dffb0;box-shadow:0 0 26px #7dffb077}.comms b{position:absolute;left:0;right:0;bottom:0;padding:5px 8px;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.06em;color:#dff;background:linear-gradient(transparent,#000c);text-transform:uppercase}
+
+/* comm screen: the person you are with, between the two sticks. A clipped holo frame, a name tab on its side, angled buttons */
+.holo{position:fixed;z-index:6;pointer-events:none;--c:#90e0e4;--cut:14px;transition:left .25s,top .25s,width .25s,height .25s}
+.holo.live{--c:#7dffb0}.holo.off{--c:#ff7a7a}
+.holo .scr{position:absolute;left:0;right:0;top:0;bottom:36px;pointer-events:auto;cursor:zoom-in;clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut))}
+.holo.big .scr{cursor:zoom-out}
+.holo .scr::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(144,224,228,.10) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 45%,transparent 55%,rgba(4,14,22,.55));mix-blend-mode:screen}
+.holo .scr::after{content:'';position:absolute;left:0;right:0;height:28%;top:-30%;background:linear-gradient(transparent,rgba(144,224,228,.16),transparent);animation:sweep 3.2s linear infinite}
+@keyframes sweep{to{top:110%}}
+.holo .scr i{position:absolute;inset:0;animation:flick 5s steps(1) infinite;background:rgba(144,224,228,.0)}
+@keyframes flick{0%,100%{background:transparent}93%{background:rgba(144,224,228,.10);transform:translateX(2px)}95%{background:transparent;transform:none}}
+.holo svg{position:absolute;left:0;top:0;overflow:visible;pointer-events:none;filter:drop-shadow(0 0 6px var(--c))}
+.holo .tab{position:absolute;left:-2px;top:-26px;height:24px;max-width:calc(100% + 30px);display:flex;align-items:center;gap:6px;padding:0 18px 0 10px;background:linear-gradient(90deg,rgba(10,30,40,.92),rgba(10,30,40,.75));border:1px solid var(--c);border-bottom:0;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 100%,0 100%);font:700 11px/1 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#e9fdff;white-space:nowrap;overflow:hidden;pointer-events:auto}
+.holo .tab em{font-style:normal;font-weight:600;color:var(--c);letter-spacing:.08em}
+.holo .tab s{width:7px;height:7px;flex:none;background:var(--c);border-radius:50%;box-shadow:0 0 8px var(--c)}
+.holo.live .tab s{animation:pulse2 .8s ease-in-out infinite}@keyframes pulse2{50%{opacity:.25}}
+.holo .side{position:absolute;right:-7px;top:22%;width:5px;height:38%;background:repeating-linear-gradient(var(--c) 0 3px,transparent 3px 7px);opacity:.8}
+.holo .btns{position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:flex;gap:5px;pointer-events:auto}
+.holo .btns button{width:38px;height:28px;border:1px solid var(--c);background:rgba(8,22,32,.88);color:#e9fdff;font:700 14px/1 system-ui,sans-serif;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);padding:0;display:grid;place-items:center}
+.holo .btns button:active{background:var(--c);color:#06222a}
+.holo .btns .hang{background:rgba(120,20,26,.9);border-color:#ff7a7a}.holo .btns .dial{background:rgba(16,90,52,.9);border-color:#7dffb0}
+.holo .msg{position:absolute;inset:0 0 36px 0;display:none;place-items:center;text-align:center;font:700 11px/1.5 system-ui,sans-serif;letter-spacing:.16em;color:var(--c);text-transform:uppercase;pointer-events:none;background:repeating-radial-gradient(circle at 30% 40%,rgba(255,255,255,.05) 0 1px,transparent 1px 3px);animation:noise .2s steps(2) infinite}
+@keyframes noise{50%{background-position:3px 2px}}
+.holo.off .msg,.holo.dialing .msg{display:grid;background-color:rgba(8,18,26,.92);clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);padding:0 10px}
+.holo.mini .scr,.holo.mini svg,.holo.mini .side,.holo.mini .msg{display:none}
+.holo.mini .tab{top:auto;bottom:36px;left:50%;transform:translateX(-50%);clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 100%,0 100%);padding:0 16px;border-bottom:1px solid var(--c)}
 </style></head><body>
 <canvas id="view"></canvas>
-<div id="stick"></div><div class="knob" id="knob"><i></i><b class="l"></b><b class="r"></b></div>
+<div id="stick"></div><div class="knob" id="knob"><i></i><b class="l"></b><b class="r"></b></div><div class="knob look" id="knob2"><i></i><b class="l"></b><b class="r"></b></div>
 <div class="hud"><a class="back" href="./">← My EchoVision</a><span class="where" id="where">Deck 5</span></div>
 <div class="row2"><button class="chip" id="talkBtn">🎙 Talk</button><button class="chip" id="typeBtn">⌨ Type</button><button class="chip" id="logBtn">Log</button><canvas id="radar" width="208" height="208" aria-label="Map"></canvas></div>
 <form class="typebar" id="typebar" autocomplete="off"><input id="typeIn" placeholder="Say something…" enterkeyhint="send"><button>Send</button></form>
@@ -65,7 +92,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 <div class="bigmap" id="bigmap"><canvas id="mapc"></canvas><div class="title" id="mapTitle">Deck 5</div><button class="close" id="mapClose" aria-label="Close map">×</button></div>
 <button class="call" id="call">Call lift</button>
 <div class="panel" id="panel"><h3>Turbolift</h3><div id="floors"></div></div>
+<div class="holo" id="holo"><div class="scr" id="holoScr"><i></i></div><svg id="holoSvg"></svg><div class="side"></div><div class="msg" id="holoMsg">No signal</div><div class="tab" id="holoTab"><s></s><span id="holoName"></span><em id="holoState"></em></div><div class="btns"><button id="hMin" aria-label="Minimise">▁</button><button id="hBig" aria-label="Make bigger">⤢</button><button id="hCall" class="hang" aria-label="Hang up">✆</button><button id="hLog" aria-label="Call log">☰</button></div></div>
 <div class="fade" id="fade"></div>
 <div class="start" id="start"><h1>Walk the ship</h1><p>Judy walks with you. Doors open as you reach them. Step into a lift and choose a deck.</p><button id="go" disabled>Loading the ship…</button></div>
-<script type="module" src="ship.mjs?v=23"></script>
+<script type="module" src="ship.mjs?v=24"></script>
 </body></html>

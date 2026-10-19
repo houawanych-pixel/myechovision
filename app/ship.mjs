@@ -276,9 +276,10 @@ function showClip(name) {
 }
 
 // ---------- controls ----------
-const input = { mx: 0, my: 0, keys: new Set() };
+const input = { mx: 0, my: 0, lx: 0, ly: 0, keys: new Set() };
 let stickId = null, stickO = null, lookId = null, lookLast = null;
-const knob = $('knob'), knobDot = knob.firstElementChild;
+const knob = $('knob'), knobDot = knob.firstElementChild, knob2 = $('knob2'), knob2Dot = knob2.firstElementChild;
+let look2Id = null, look2O = null;
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 // A fixed analog stick at the bottom left: up walks forward, down walks back, left and right turn.
 // Touch anywhere on the left half to grab it. Dragging on the right half looks around, with only a little
@@ -286,9 +287,11 @@ canvas.addEventListener('contextmenu', e => e.preventDefault());
 const PITCH_DOWN = -0.2, PITCH_UP = 0.55;
 const stickCentre = () => { const r = knob.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2] };
 addEventListener('pointerdown', e => {
-  if (!started || e.target.closest('button,a,.panel,input,form,canvas#radar,.bigmap')) return;
+  if (!started || e.target.closest('button,a,.panel,input,form,canvas#radar,.bigmap,.holo .scr,.holo .tab')) return;
   const left = e.clientX < innerWidth / 2;
   if (left && stickId === null) { stickId = e.pointerId; stickO = stickCentre(); knob.classList.add('on'); moveStick(e) }
+  // right half: a second stick to look around with on touch screens; a mouse still drags to look
+  else if (!left && e.pointerType !== 'mouse' && look2Id === null) { look2Id = e.pointerId; const r = knob2.getBoundingClientRect(); look2O = [r.left + r.width / 2, r.top + r.height / 2]; knob2.classList.add('on'); moveLook2(e) }
   else if (!left && lookId === null) { lookId = e.pointerId; lookLast = [e.clientX, e.clientY] }
 });
 function moveStick(e) {
@@ -296,8 +299,14 @@ function moveStick(e) {
   if (r > R) { dx *= R / r; dy *= R / r }
   input.mx = dx / R; input.my = -dy / R; knobDot.style.transform = `translate(${dx}px,${dy}px)`;
 }
+function moveLook2(e) {
+  let dx = e.clientX - look2O[0], dy = e.clientY - look2O[1]; const r = Math.hypot(dx, dy), R = 50;
+  if (r > R) { dx *= R / r; dy *= R / r }
+  input.lx = dx / R; input.ly = -dy / R; knob2Dot.style.transform = `translate(${dx}px,${dy}px)`;
+}
 addEventListener('pointermove', e => {
   if (e.pointerId === stickId) moveStick(e);
+  else if (e.pointerId === look2Id) moveLook2(e);
   else if (e.pointerId === lookId) {
     const k = e.pointerType === 'mouse' ? 0.004 : 0.0055;
     player.yaw -= (e.clientX - lookLast[0]) * k; player.pitch = Math.max(PITCH_DOWN, Math.min(PITCH_UP, player.pitch - (e.clientY - lookLast[1]) * k));
@@ -307,6 +316,7 @@ addEventListener('pointermove', e => {
 const endPointer = e => {
   if (e.pointerId === stickId) { stickId = null; input.mx = input.my = 0; knob.classList.remove('on'); knobDot.style.transform = '' }
   if (e.pointerId === lookId) lookId = null;
+  if (e.pointerId === look2Id) { look2Id = null; input.lx = input.ly = 0; knob2.classList.remove('on'); knob2Dot.style.transform = '' }
 };
 addEventListener('pointerup', endPointer); addEventListener('pointercancel', endPointer);
 addEventListener('keydown', e => input.keys.add(e.key.toLowerCase()));
@@ -437,6 +447,9 @@ function frame(now) {
     // a small dead zone, then turn speed grows with how far the stick is pushed sideways
     const turn = Math.abs(mx) < 0.12 ? 0 : Math.sign(mx) * (Math.abs(mx) - 0.12) / 0.88;
     player.yaw -= turn * Math.abs(turn) * 1.6 * dt; mx = 0;
+    // the look stick: turn and tilt, faster the further it is pushed
+    const lx = Math.abs(input.lx) < 0.1 ? 0 : input.lx, ly = Math.abs(input.ly) < 0.1 ? 0 : input.ly;
+    player.yaw -= lx * Math.abs(lx) * 2.4 * dt; player.pitch = Math.max(PITCH_DOWN, Math.min(PITCH_UP, player.pitch + ly * Math.abs(ly) * 1.4 * dt));
     if (Math.abs(my) < 0.12) my = 0;
     const fx = -Math.sin(player.yaw), fy = Math.cos(player.yaw), rx = Math.cos(player.yaw), ry = Math.sin(player.yaw);
     const sp = my < 0 ? 1.4 : 2.2, vx = (fx * my + rx * mx) * sp, vy = (fy * my + ry * mx) * sp;
@@ -478,10 +491,10 @@ function frame(now) {
     model.rotation.y = Math.atan2(camera.position.x - model.position.x, camera.position.z - model.position.z);
     modelAnim(judy.moving ? 'walk' : 'idle'); mixer?.update(dt); rigTick?.(dt, judy.moving ? Math.hypot(...judy.vel) : 0, talking);
     // the body has no face, so while they talk, their talking clip plays in a comms window
-    commsOn = talking && judy.deck === player.deck; if (commsOn) showClip(clips.talk ? 'talk' : 'normal');
+    showClip(talking && clips.talk ? 'talk' : 'normal');
   } else if (INTERCOM) {
     // no 3D body and no green-screen clip: a picture walking beside you looks wrong, so they are on a call instead
-    judyMesh.visible = false; commsOn = true; showClip(talking && clips.talk ? 'talk' : 'normal');
+    judyMesh.visible = false; showClip(talking && clips.talk ? 'talk' : 'normal');
   } else {
     judyMesh.visible = judy.deck === player.deck;
     const jo = laneOffset(judy, JUDY_LANE, judyOff, dt); judyMesh.position.copy(V(judy.p[0] + jo[0], judy.p[1] + jo[1], jf + TOP - JH / 2));
@@ -500,30 +513,85 @@ function frame(now) {
   if (!NORENDER) { renderer.render(scene, camera); drawComms() }
 }
 
-// ---------- comms window: a 3D body's talking face ----------
-// Rigged bodies have no moving face, so when one speaks we cut to their talking clip in a small comms window
-// (keyed like the billboard) and close it when they finish. Characters without a clip show their picture there.
-let commsOn = false;
+// ---------- comm screen: the person you are with, between the two sticks ----------
+// Always on (unless minimised): their clip or picture in a clipped holo frame with a name tab and angled buttons.
+// Tap the picture for a big view. Someone with no 3D body and no green-screen clip is only ever here, on a call;
+// someone with a 3D body walks with you and the screen shows their face. Hang up / call, minimise, bigger, call log.
 // A partner with no 3D body and no green-screen clip is shown as a call on a screen, never as a flat picture in the room.
 const INTERCOM = !model && !P.cut; if (INTERCOM) judyMat.uniforms.fadeBottom.value = 0;
 if (P.hasBody) { const b = document.createElement('button'); b.className = 'chip'; b.textContent = P.model ? '🎞 Video' : '🧍 3D'; b.title = 'Switch between the 3D body and the video';
   b.onclick = () => { try { localStorage.setItem('ship-body', P.model ? 'video' : '3d') } catch { } location.reload() }; $('talkBtn').before(b) }
 const hudScene = new THREE.Scene(), hudCam = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 0, 2);
-const hudFace = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), judyMat); hudFace.position.z = -1; hudScene.add(hudFace);
-const commsBox = document.createElement('div'); commsBox.className = 'comms'; commsBox.innerHTML = `<b>◉ ${P.name.replace(/[<&]/g, '')}</b>`; let commsTalk = null; document.body.append(commsBox);
+// the screen's own copy of the picture material (no faded bottom), clipped to the frame shape with the stencil
+const hudMat = judyMat.clone(); hudMat.uniforms.fadeBottom.value = 0; hudMat.uniforms.light.value = 1.05;
+Object.assign(hudMat, { stencilWrite: true, stencilRef: 1, stencilFunc: THREE.EqualStencilFunc, stencilZPass: THREE.KeepStencilOp, depthTest: false, transparent: true });
+const plateMat = new THREE.MeshBasicMaterial({ color: 0x0a1c26, transparent: true, opacity: 0.82, depthTest: false, stencilWrite: true, stencilRef: 1, stencilFunc: THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp });
+let plate = null; const hudFace = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), hudMat); hudFace.position.z = -1; hudFace.renderOrder = 2; hudScene.add(hudFace);
+const holo = $('holo'), holoScr = $('holoScr'), holoSvg = $('holoSvg');
+$('holoName').textContent = P.name;
+let holoMode = INTERCOM ? 'normal' : 'normal', onCall = true, dialUntil = 0, holoKey = '';
+const CUT = 14;
+function holoShape(w, h) {   // the frame outline (chamfered corners) and the stencil plate, rebuilt when the size changes
+  const k = w + 'x' + h; if (k === holoKey) return; holoKey = k;
+  const pts = [[CUT, 0], [w, 0], [w, h - CUT], [w - CUT, h], [0, h], [0, CUT]];
+  holoSvg.setAttribute('width', w); holoSvg.setAttribute('height', h);
+  const tick = (x, y, dx, dy) => `M${x} ${y}l${dx} 0M${x} ${y}l0 ${dy}`;
+  holoSvg.innerHTML = `<polygon points="${pts.map(p => p.join(',')).join(' ')}" fill="none" stroke="var(--c)" stroke-width="1.5"/>`
+    + `<path d="${tick(w - 3, 3, -16, 10)}${tick(3, h - 3, 16, -10)}" stroke="var(--c)" stroke-width="3" fill="none"/>`
+    + `<path d="M${CUT + 6} ${h - 5}h${Math.max(10, w * 0.3)}" stroke="var(--c)" stroke-width="2" opacity=".7"/>`;
+  const sh = new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x / w - 0.5, 0.5 - y / h)));
+  if (plate) { hudScene.remove(plate); plate.geometry.dispose() }
+  plate = new THREE.Mesh(new THREE.ShapeGeometry(sh), plateMat); plate.position.z = -1.5; plate.renderOrder = 1; hudScene.add(plate);
+}
+function holoLayout() {   // where the screen goes: between the sticks, or above them on a narrow phone; big = middle of the view
+  const W = innerWidth, H = innerHeight, m0 = hudMat.uniforms.map.value?.image;
+  const r0 = (m0?.videoHeight || m0?.height || 3) / (m0?.videoWidth || m0?.width || 2);
+  const sticks = 2 * (Math.max(22, 0) + 140), btn = 36, tab = 26;
+  if (holoMode === 'big') {
+    const hmax = H - 100, wmax = Math.min(W - 32, 720); let h = Math.min(hmax, wmax * r0), w = Math.min(wmax, h / r0);
+    w = Math.max(200, Math.round(w)); h = Math.max(160, Math.round(h));
+    return { x: Math.round((W - w) / 2), y: Math.round(Math.max(56, (H - h - btn) / 2 + 16)), w, h };
+  }
+  const room = W - sticks - 20, w = Math.round(Math.max(118, Math.min(160, room > 118 ? room : W * 0.34)));
+  const h = Math.round(Math.max(w * 0.85, Math.min(w * 1.35, w * r0)));
+  const above = room < 118, bottom = (above ? 26 + 132 + 18 : 18) + btn;
+  return { x: Math.round((W - w) / 2), y: Math.round(H - bottom - h), w, h };
+}
+function holoState() {
+  const now = performance.now(), dialing = now < dialUntil;
+  holo.classList.toggle('off', !onCall); holo.classList.toggle('dialing', dialing); holo.classList.toggle('live', onCall && !dialing && !!talking);
+  holo.classList.toggle('big', holoMode === 'big'); holo.classList.toggle('mini', holoMode === 'mini');
+  $('holoState').textContent = !onCall ? '· offline' : dialing ? '· calling' : talking ? '· speaking' : INTERCOM || judy?.deck !== player.deck ? '· on call' : '· with you';
+  $('holoMsg').textContent = !onCall ? 'Call ended · tap ✆ to call' : 'Calling…';
+  const c = $('hCall'); c.className = onCall ? 'hang' : 'dial'; c.setAttribute('aria-label', onCall ? 'Hang up' : 'Call');
+  $('hBig').textContent = holoMode === 'big' ? '⤡' : '⤢'; $('hMin').textContent = holoMode === 'mini' ? '▣' : '▁';
+}
 function drawComms() {
-  commsBox.style.display = commsOn ? 'block' : 'none'; if (!commsOn) return;
-  if (commsTalk !== talking) { commsTalk = talking; commsBox.classList.toggle('live', !!talking); commsBox.querySelector('b').textContent = `◉ ${P.name}${INTERCOM && !talking ? ' · on call' : ''}` }
-  const m0 = judyMat.uniforms.map.value?.image, r0 = (m0?.videoHeight || m0?.height || 3) / (m0?.videoWidth || m0?.width || 2);
-  const W = innerWidth, H = innerHeight, w = Math.round(Math.min(160, W * 0.3)), h = Math.round(Math.min(w * 1.5, Math.max(w, w * r0)) + 22), x = W - w - 12, top = 172;   // right side under the radar, shaped like the picture
-  commsBox.style.cssText += `;left:${x}px;top:${top}px;width:${w}px;height:${h}px`;
-  const m = judyMat.uniforms.map.value?.image, aw = m?.videoWidth || m?.width || 2, ah = m?.videoHeight || m?.height || 3, a = aw / ah, pa = w / h;
-  hudFace.scale.set(a > pa ? 1 : a / pa, a > pa ? pa / a : 1, 1);   // whole picture, never stretched or cropped
-  const bg = renderer.getClearColor(new THREE.Color()), ba = renderer.getClearAlpha();
-  renderer.setScissorTest(true); renderer.setViewport(x, H - top - h, w, h); renderer.setScissor(x, H - top - h, w, h);
-  renderer.setClearColor(0x0d1626, 1); renderer.clear(); renderer.render(hudScene, hudCam);
+  if (!started) { holo.style.display = 'none'; return }
+  holo.style.display = 'block'; holoState();
+  const L = holoLayout(); holo.style.left = L.x + 'px'; holo.style.top = L.y + 'px'; holo.style.width = L.w + 'px'; holo.style.height = (L.h + 36) + 'px';
+  if (holoMode === 'mini' || !onCall || performance.now() < dialUntil) return;
+  holoShape(L.w, L.h);
+  hudMat.uniforms.map.value = judyMat.uniforms.map.value;
+  const m = hudMat.uniforms.map.value?.image, aw = m?.videoWidth || m?.width || 2, ah = m?.videoHeight || m?.height || 3, a = aw / ah, pa = L.w / L.h;
+  // fill the screen (cropping the sides a little) so it reads as a call, not a small picture in a box
+  hudFace.scale.set(a > pa ? a / pa : 1, a > pa ? 1 : pa / a, 1);
+  const W = innerWidth, H = innerHeight, y = H - L.y - L.h, bg = renderer.getClearColor(new THREE.Color()), ba = renderer.getClearAlpha();
+  renderer.setScissorTest(true); renderer.setViewport(L.x, y, L.w, L.h); renderer.setScissor(L.x, y, L.w, L.h);
+  renderer.clear(false, true, true); renderer.render(hudScene, hudCam);
   renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H); renderer.setClearColor(bg, ba);
 }
+holoScr.onclick = () => { holoMode = holoMode === 'big' ? 'normal' : 'big' };
+$('holoTab').onclick = () => { if (holoMode === 'mini') holoMode = 'normal' };
+$('hMin').onclick = () => { holoMode = holoMode === 'mini' ? 'normal' : 'mini' };
+$('hBig').onclick = () => { holoMode = holoMode === 'big' ? 'normal' : 'big' };
+$('hLog').onclick = () => $('logBtn').click();
+$('hCall').onclick = () => {
+  if (onCall) {   // hang up: stop listening and speaking; they stay with you if they have a body, the screen goes dark
+    onCall = false; talk?.stop(); talkBtn?.classList.remove('on', 'listen'); showLine('note', `Call with ${P.name} ended.`);
+    if (holoMode === 'big') holoMode = 'normal';
+  } else { onCall = true; dialUntil = performance.now() + 1200; showLine('note', `Calling ${P.name}…`) }
+};
 
 // ---------- radar and map ----------
 // A small round radar (top right) centred on you, nose of the ship up; tap it for the whole deck with your arrow.
@@ -593,12 +661,12 @@ typebar.onsubmit = e => {
   e.preventDefault(); const t = typeIn.value; typeIn.value = '';
   // the box gets out of the way as soon as you send
   typebar.style.display = 'none'; typeBtn.classList.remove('on'); typeIn.blur();
-  if (t.trim()) talk?.ask(t);
+  if (t.trim()) { if (!onCall) { onCall = true; dialUntil = performance.now() + 900 } talk?.ask(t) }
 };
 talkBtn.onclick = () => {
   if (!talk) return;
   if (!talk.canListen) return showLine('note', 'This browser cannot listen. Use Type instead.');
-  const on = !talkBtn.classList.contains('on');
+  const on = !talkBtn.classList.contains('on'); if (on && !onCall) { onCall = true; dialUntil = performance.now() + 900 }
   const now = talk.setHands(on, off => { talkBtn.classList.toggle('on', off); talkBtn.classList.toggle('listen', off) });
   talkBtn.classList.toggle('on', now); talkBtn.classList.toggle('listen', now);
   showLine('note', now ? `Hands-free on. Just talk to ${talk.name}.` : 'Hands-free off.');
