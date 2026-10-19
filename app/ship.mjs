@@ -287,7 +287,7 @@ canvas.addEventListener('contextmenu', e => e.preventDefault());
 const PITCH_DOWN = -0.2, PITCH_UP = 0.55;
 const stickCentre = () => { const r = knob.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2] };
 addEventListener('pointerdown', e => {
-  if (!started || e.target.closest('button,a,.panel,input,form,canvas#radar,.bigmap,.holo .scr,.holo .tab')) return;
+  if (!started || holoMode === 'full' || e.target.closest('button,a,.panel,input,form,canvas#radar,.bigmap,.holo .scr,.holo .tab')) return;
   const left = e.clientX < innerWidth / 2;
   if (left && stickId === null) { stickId = e.pointerId; stickO = stickCentre(); knob.classList.add('on'); moveStick(e) }
   // right half: a second stick to look around with on touch screens; a mouse still drags to look
@@ -440,7 +440,7 @@ let last = performance.now(), hintTimer = 0, labelTimer = 0;
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (started && !riding) {
+  if (started && !riding && holoMode !== 'full') {
     let mx = input.mx, my = input.my; const k = input.keys;
     if (k.has('w') || k.has('arrowup')) my = 1; if (k.has('s') || k.has('arrowdown')) my = -1;
     if (k.has('a') || k.has('arrowleft')) mx = -1; if (k.has('d') || k.has('arrowright')) mx = 1;
@@ -543,53 +543,58 @@ function holoShape(w, h) {   // the frame outline (chamfered corners) and the st
   if (plate) { hudScene.remove(plate); plate.geometry.dispose() }
   plate = new THREE.Mesh(new THREE.ShapeGeometry(sh), plateMat); plate.position.z = -1.5; plate.renderOrder = 1; hudScene.add(plate);
 }
-function holoLayout() {   // where the screen goes: between the sticks, or above them on a narrow phone; big = middle of the view
+function holoLayout() {
+  // like Homelancer: the radar sits bottom middle between the two sticks and the screen sits on the right.
+  // Tall phone: above the right stick. Wide phone: low down, between the radar and the right stick. Full = the whole view.
   const W = innerWidth, H = innerHeight, m0 = hudMat.uniforms.map.value?.image;
   const r0 = (m0?.videoHeight || m0?.height || 3) / (m0?.videoWidth || m0?.width || 2);
-  const sticks = 2 * (Math.max(22, 0) + 140), btn = 36, tab = 26;
-  if (holoMode === 'big') {
-    const hmax = H - 100, wmax = Math.min(W - 32, 720); let h = Math.min(hmax, wmax * r0), w = Math.min(wmax, h / r0);
-    w = Math.max(200, Math.round(w)); h = Math.max(160, Math.round(h));
-    return { x: Math.round((W - w) / 2), y: Math.round(Math.max(56, (H - h - btn) / 2 + 16)), w, h };
+  const btn = 46, tab = 26, top = 112, stickTop = H - 170;
+  if (holoMode === 'full') return { x: 0, y: 0, w: W, h: H - 74 };
+  if (stickTop - btn - tab - top >= 170) {   // room above the right stick
+    const w = Math.round(Math.min(170, W * 0.42)), h = Math.round(Math.min(stickTop - btn - top - tab, Math.max(w * 1.1, Math.min(w * 1.45, w * r0))));
+    return { x: W - w - 16, y: stickTop - btn - h, w, h };
   }
-  const room = W - sticks - 20, w = Math.round(Math.max(118, Math.min(160, room > 118 ? room : W * 0.34)));
-  const h = Math.round(Math.max(w * 0.85, Math.min(w * 1.35, w * r0)));
-  const above = room < 118, bottom = (above ? 26 + 132 + 18 : 18) + btn;
-  return { x: Math.round((W - w) / 2), y: Math.round(H - bottom - h), w, h };
+  const left = W / 2 + 62, right = W - 172, w = Math.round(Math.max(130, Math.min(190, right - left)));
+  const h = Math.round(Math.min(H - 18 - btn - tab - top, Math.max(w * 0.9, Math.min(w * 1.3, w * r0))));
+  return { x: Math.round(Math.min(right - w, (left + right - w) / 2)), y: H - 14 - btn - h, w, h };
 }
 function holoState() {
   const now = performance.now(), dialing = now < dialUntil;
   holo.classList.toggle('off', !onCall); holo.classList.toggle('dialing', dialing); holo.classList.toggle('live', onCall && !dialing && !!talking);
-  holo.classList.toggle('big', holoMode === 'big'); holo.classList.toggle('mini', holoMode === 'mini');
+  holo.classList.toggle('full', holoMode === 'full'); holo.classList.toggle('mini', holoMode === 'mini'); document.body.classList.toggle('holofull', holoMode === 'full');
+  $('hTalk').classList.toggle('on', talkBtn.classList.contains('on'));
   $('holoState').textContent = !onCall ? '· offline' : dialing ? '· calling' : talking ? '· speaking' : INTERCOM || judy?.deck !== player.deck ? '· on call' : '· with you';
   $('holoMsg').textContent = !onCall ? 'Call ended · tap ✆ to call' : 'Calling…';
   const c = $('hCall'); c.className = onCall ? 'hang' : 'dial'; c.setAttribute('aria-label', onCall ? 'Hang up' : 'Call');
-  $('hBig').textContent = holoMode === 'big' ? '⤡' : '⤢'; $('hMin').textContent = holoMode === 'mini' ? '▣' : '▁';
+  $('hMin').textContent = holoMode === 'mini' ? '▣' : '▁';
 }
 function drawComms() {
   if (!started) { holo.style.display = 'none'; return }
   holo.style.display = 'block'; holoState();
-  const L = holoLayout(); holo.style.left = L.x + 'px'; holo.style.top = L.y + 'px'; holo.style.width = L.w + 'px'; holo.style.height = (L.h + 36) + 'px';
+  const L = holoLayout(); holo.style.left = L.x + 'px'; holo.style.top = L.y + 'px'; holo.style.width = L.w + 'px'; holo.style.height = (L.h + (holoMode === 'full' ? 74 : 50)) + 'px';
   if (holoMode === 'mini' || !onCall || performance.now() < dialUntil) return;
   holoShape(L.w, L.h);
   hudMat.uniforms.map.value = judyMat.uniforms.map.value;
   const m = hudMat.uniforms.map.value?.image, aw = m?.videoWidth || m?.width || 2, ah = m?.videoHeight || m?.height || 3, a = aw / ah, pa = L.w / L.h;
   // fill the screen (cropping the sides a little) so it reads as a call, not a small picture in a box
-  hudFace.scale.set(a > pa ? a / pa : 1, a > pa ? 1 : pa / a, 1);
+  if (holoMode === 'full') { hudFace.scale.set(a > pa ? 1 : a / pa, a > pa ? pa / a : 1, 1); hudFace.position.y = 0 }   // full screen: the whole picture
+  else { hudFace.scale.set(a > pa ? a / pa : 1, a > pa ? 1 : pa / a, 1); hudFace.position.y = 0.5 - hudFace.scale.y / 2 }   // small: filled, cropped from the bottom so the face stays
   const W = innerWidth, H = innerHeight, y = H - L.y - L.h, bg = renderer.getClearColor(new THREE.Color()), ba = renderer.getClearAlpha();
   renderer.setScissorTest(true); renderer.setViewport(L.x, y, L.w, L.h); renderer.setScissor(L.x, y, L.w, L.h);
   renderer.clear(false, true, true); renderer.render(hudScene, hudCam);
   renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H); renderer.setClearColor(bg, ba);
 }
-holoScr.onclick = () => { holoMode = holoMode === 'big' ? 'normal' : 'big' };
-$('holoTab').onclick = () => { if (holoMode === 'mini') holoMode = 'normal' };
-$('hMin').onclick = () => { holoMode = holoMode === 'mini' ? 'normal' : 'mini' };
-$('hBig').onclick = () => { holoMode = holoMode === 'big' ? 'normal' : 'big' };
+const setMode = m => { holoMode = m; if (m === 'full') { input.mx = input.my = input.lx = input.ly = 0; stickId = look2Id = lookId = null; knobDot.style.transform = knob2Dot.style.transform = '' } };
+holoScr.onclick = () => setMode(holoMode === 'full' ? 'normal' : 'full');
+$('holoTab').onclick = () => { if (holoMode === 'mini') setMode('normal') };
+$('hMin').onclick = () => setMode(holoMode === 'normal' ? 'mini' : 'normal');   // in full screen it brings the small screen and the sticks back
+$('hFull').onclick = () => setMode(holoMode === 'full' ? 'normal' : 'full');
+$('hTalk').onclick = () => talkBtn.click();
+$('hType').onclick = () => typeBtn.click();
 $('hLog').onclick = () => $('logBtn').click();
 $('hCall').onclick = () => {
   if (onCall) {   // hang up: stop listening and speaking; they stay with you if they have a body, the screen goes dark
     onCall = false; talk?.stop(); talkBtn?.classList.remove('on', 'listen'); showLine('note', `Call with ${P.name} ended.`);
-    if (holoMode === 'big') holoMode = 'normal';
   } else { onCall = true; dialUntil = performance.now() + 1200; showLine('note', `Calling ${P.name}…`) }
 };
 

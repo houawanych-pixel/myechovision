@@ -58,10 +58,10 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 .comms{position:fixed;display:none;z-index:6;border:1.5px solid #90e0e4;border-radius:12px;box-shadow:0 0 22px #90e0e455,inset 0 0 0 1px #0008;pointer-events:none;overflow:hidden}.comms.live{border-color:#7dffb0;box-shadow:0 0 26px #7dffb077}.comms b{position:absolute;left:0;right:0;bottom:0;padding:5px 8px;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.06em;color:#dff;background:linear-gradient(transparent,#000c);text-transform:uppercase}
 
 /* comm screen: the person you are with, between the two sticks. A clipped holo frame, a name tab on its side, angled buttons */
-.holo{position:fixed;z-index:6;pointer-events:none;--c:#90e0e4;--cut:14px;transition:left .25s,top .25s,width .25s,height .25s}
+.holo{position:fixed;z-index:6;pointer-events:none;--c:#90e0e4;--cut:14px}
 .holo.live{--c:#7dffb0}.holo.off{--c:#ff7a7a}
-.holo .scr{position:absolute;left:0;right:0;top:0;bottom:36px;pointer-events:auto;cursor:zoom-in;clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut))}
-.holo.big .scr{cursor:zoom-out}
+.holo .scr{position:absolute;left:0;right:0;top:0;bottom:50px;pointer-events:auto;cursor:zoom-in;clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut))}
+.holo.full .scr{cursor:zoom-out}
 .holo .scr::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(144,224,228,.10) 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 45%,transparent 55%,rgba(4,14,22,.55));mix-blend-mode:screen}
 .holo .scr::after{content:'';position:absolute;left:0;right:0;height:28%;top:-30%;background:linear-gradient(transparent,rgba(144,224,228,.16),transparent);animation:sweep 3.2s linear infinite}
 @keyframes sweep{to{top:110%}}
@@ -74,14 +74,26 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 .holo.live .tab s{animation:pulse2 .8s ease-in-out infinite}@keyframes pulse2{50%{opacity:.25}}
 .holo .side{position:absolute;right:-7px;top:22%;width:5px;height:38%;background:repeating-linear-gradient(var(--c) 0 3px,transparent 3px 7px);opacity:.8}
 .holo .btns{position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:flex;gap:5px;pointer-events:auto}
-.holo .btns button{width:38px;height:28px;border:1px solid var(--c);background:rgba(8,22,32,.88);color:#e9fdff;font:700 14px/1 system-ui,sans-serif;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);padding:0;display:grid;place-items:center}
+.holo .btns button{width:46px;height:40px;font-size:18px!important;border:1px solid var(--c);background:rgba(8,22,32,.88);color:#e9fdff;font:700 14px/1 system-ui,sans-serif;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);padding:0;display:grid;place-items:center}
 .holo .btns button:active{background:var(--c);color:#06222a}
 .holo .btns .hang{background:rgba(120,20,26,.9);border-color:#ff7a7a}.holo .btns .dial{background:rgba(16,90,52,.9);border-color:#7dffb0}
-.holo .msg{position:absolute;inset:0 0 36px 0;display:none;place-items:center;text-align:center;font:700 11px/1.5 system-ui,sans-serif;letter-spacing:.16em;color:var(--c);text-transform:uppercase;pointer-events:none;background:repeating-radial-gradient(circle at 30% 40%,rgba(255,255,255,.05) 0 1px,transparent 1px 3px);animation:noise .2s steps(2) infinite}
+.holo .msg{position:absolute;inset:0 0 50px 0;display:none;place-items:center;text-align:center;font:700 11px/1.5 system-ui,sans-serif;letter-spacing:.16em;color:var(--c);text-transform:uppercase;pointer-events:none;background:repeating-radial-gradient(circle at 30% 40%,rgba(255,255,255,.05) 0 1px,transparent 1px 3px);animation:noise .2s steps(2) infinite}
 @keyframes noise{50%{background-position:3px 2px}}
 .holo.off .msg,.holo.dialing .msg{display:grid;background-color:rgba(8,18,26,.92);clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);padding:0 10px}
 .holo.mini .scr,.holo.mini svg,.holo.mini .side,.holo.mini .msg{display:none}
-.holo.mini .tab{top:auto;bottom:36px;left:50%;transform:translateX(-50%);clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 100%,0 100%);padding:0 16px;border-bottom:1px solid var(--c)}
+.holo.mini .tab{top:auto;bottom:50px;left:50%;transform:translateX(-50%);clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 100%,0 100%);padding:0 16px;border-bottom:1px solid var(--c)}
+
+.holo .btns .fo{display:none}.holo.full .btns .fo{display:grid}
+.holo .btns button.on{background:var(--c);color:#06222a}
+.holo.full .btns{gap:10px}.holo.full .btns button{width:60px;height:48px;font-size:22px!important}
+.holo.full .scr,.holo.full .msg{bottom:74px;clip-path:none}.holo.full .msg{inset:0 0 74px 0}
+.holo.full .tab{left:max(14px,env(safe-area-inset-left));top:max(14px,env(safe-area-inset-top));height:30px;font-size:13px;border-bottom:1px solid var(--c)}
+.holo.full .side{display:none}
+.holo.full::before{content:"";position:absolute;left:0;right:0;bottom:0;height:74px;background:linear-gradient(#06101a,#03080e);border-top:1px solid var(--c);pointer-events:auto}.holo.full{transition:none}
+body.holofull .hud,body.holofull .row2,body.holofull .knob,body.holofull .call,body.holofull .panel{display:none!important}
+#radar{position:fixed;left:50%;bottom:calc(max(26px,env(safe-area-inset-bottom)) + 14px);transform:translateX(-50%);margin:0;width:min(104px,calc(100vw - 2*(max(22px,env(safe-area-inset-left)) + 140px)));height:auto;aspect-ratio:1}
+.typebar{right:14px}
+body.holofull .log,body.holofull .typebar{z-index:8}
 </style></head><body>
 <canvas id="view"></canvas>
 <div id="stick"></div><div class="knob" id="knob"><i></i><b class="l"></b><b class="r"></b></div><div class="knob look" id="knob2"><i></i><b class="l"></b><b class="r"></b></div>
@@ -92,8 +104,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 <div class="bigmap" id="bigmap"><canvas id="mapc"></canvas><div class="title" id="mapTitle">Deck 5</div><button class="close" id="mapClose" aria-label="Close map">×</button></div>
 <button class="call" id="call">Call lift</button>
 <div class="panel" id="panel"><h3>Turbolift</h3><div id="floors"></div></div>
-<div class="holo" id="holo"><div class="scr" id="holoScr"><i></i></div><svg id="holoSvg"></svg><div class="side"></div><div class="msg" id="holoMsg">No signal</div><div class="tab" id="holoTab"><s></s><span id="holoName"></span><em id="holoState"></em></div><div class="btns"><button id="hMin" aria-label="Minimise">▁</button><button id="hBig" aria-label="Make bigger">⤢</button><button id="hCall" class="hang" aria-label="Hang up">✆</button><button id="hLog" aria-label="Call log">☰</button></div></div>
+<div class="holo" id="holo"><div class="scr" id="holoScr"><i></i></div><svg id="holoSvg"></svg><div class="side"></div><div class="msg" id="holoMsg">No signal</div><div class="tab" id="holoTab"><s></s><span id="holoName"></span><em id="holoState"></em></div><div class="btns"><button id="hTalk" aria-label="Speak">🎙</button><button id="hType" class="fo" aria-label="Type">⌨</button><button id="hMin" aria-label="Minimise">▁</button><button id="hFull" aria-label="Full screen">⛶</button><button id="hLog" class="fo" aria-label="Call log">☰</button><button id="hCall" class="hang fo" aria-label="Hang up">✆</button></div></div>
 <div class="fade" id="fade"></div>
 <div class="start" id="start"><h1>Walk the ship</h1><p>Judy walks with you. Doors open as you reach them. Step into a lift and choose a deck.</p><button id="go" disabled>Loading the ship…</button></div>
-<script type="module" src="ship.mjs?v=24"></script>
+<script type="module" src="ship.mjs?v=26"></script>
 </body></html>
