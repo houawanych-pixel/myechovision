@@ -119,10 +119,12 @@ gltf.scene.traverse(o => {
   const m = o.material;
   // the cabins' painted door is replaced by real sliding doors; keep its picture for every door leaf
   if (m && /doorimg/i.test(m.name || '')) { doorMat = m; o.visible = false }
+  // a world with its own floor plan is walked from inside its rooms: show both sides of every face (some walls face outward)
+  if (m && WORLD_LAYOUT) m.side = THREE.DoubleSide;
   if (m && m.transparent && m.opacity < 0.05) o.visible = false;
   if (m && /star/i.test(m.name || '')) o.material = windowMat;
   // monitors stay dark glass for now (a screen animation can play on them later)
-  if (m && /screen/i.test(m.name || '')) { m.color.set(0x050608); m.emissive?.set(0x000000); m.emissiveIntensity = 0; m.roughness = 0.12; m.metalness = 0.4 }
+  if (m && /screen/i.test(m.name || '') && !m.emissiveMap) { m.color.set(0x050608); m.emissive?.set(0x000000); m.emissiveIntensity = 0; m.roughness = 0.12; m.metalness = 0.4 }
   // Blender's procedural looks, redone simply: glass you can see through, the Voyager-style carpet, the holodeck grid
   if (m && /glass|frost/i.test(m.name || '')) { m.transparent = true; m.opacity = /frost/i.test(m.name) ? 0.55 : 0.18; m.depthWrite = false; m.roughness = 0.05 }
   if (m && /carpet/i.test(m.name || '')) { m.color.set(0x8d9097); m.roughness = 0.9; m.metalness = 0 }
