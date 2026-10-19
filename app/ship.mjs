@@ -468,7 +468,7 @@ function frame(now) {
   for (const e of EXTRAS) {
     if (!e.f) continue; recordTrail(e.f, player.p, player.deck); stepFollower(e.f, plan, player, dt);
     const o = laneOffset(e.f, e.lane, e.off, dt), ef = PLAN ? floorAt(plan, e.f.p, e.f.deck) : (groundAt(e.f.p, player.floor + 1.2) ?? player.floor);
-    e.mesh.visible = e.keyed && e.f.deck === player.deck;   // only cut-out (green-screen) clips walk with you e.mesh.position.copy(V(e.f.p[0] + o[0], e.f.p[1] + o[1], e.full ? ef + FULL_H / 2 : ef + TOP - JH / 2));
+    e.mesh.visible = false;   // no 3D body: they are on the call screen (their photo or clip), not walking in the room   // only cut-out (green-screen) clips walk with you e.mesh.position.copy(V(e.f.p[0] + o[0], e.f.p[1] + o[1], e.full ? ef + FULL_H / 2 : ef + TOP - JH / 2));
     if (e.full) { const v = e.clips.walk.v; if (e.f.moving && v.paused && started) v.play().catch(() => { }); else if (!e.f.moving && !v.paused) v.pause() }
     e.mesh.rotation.set(0, Math.atan2(camera.position.x - e.mesh.position.x, camera.position.z - e.mesh.position.z), 0);
     extraClip(e, e.f.moving ? 'walk' : 'normal');
@@ -518,7 +518,7 @@ function frame(now) {
 // Tap the picture for a big view. Someone with no 3D body and no green-screen clip is only ever here, on a call;
 // someone with a 3D body walks with you and the screen shows their face. Hang up / call, minimise, bigger, call log.
 // A partner with no 3D body and no green-screen clip is shown as a call on a screen, never as a flat picture in the room.
-const INTERCOM = !model && !P.cut; if (INTERCOM) judyMat.uniforms.fadeBottom.value = 0;
+const INTERCOM = !model;   // only a GLB character walks with you; everyone else is on the call screen if (INTERCOM) judyMat.uniforms.fadeBottom.value = 0;
 if (P.hasBody) { const b = document.createElement('button'); b.className = 'chip'; b.textContent = P.model ? '🎞 Video' : '🧍 3D'; b.title = 'Switch between the 3D body and the video';
   b.onclick = () => { try { localStorage.setItem('ship-body', P.model ? 'video' : '3d') } catch { } location.reload() }; $('talkBtn').before(b) }
 const hudScene = new THREE.Scene(), hudCam = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 0, 2);
@@ -529,6 +529,16 @@ const plateMat = new THREE.MeshBasicMaterial({ color: 0x0a1c26, transparent: tru
 let plate = null; const hudFace = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), hudMat); hudFace.position.z = -1; hudFace.renderOrder = 2; hudScene.add(hudFace);
 const holo = $('holo'), holoScr = $('holoScr'), holoSvg = $('holoSvg');
 $('holoName').textContent = P.name;
+// the rest of the party, messenger style: a small photo (or their moving clip) for each, beside the screen
+if (EXTRAS.length) {
+  const crew = document.createElement('div'); crew.className = 'crew';
+  for (const e of EXTRAS) {
+    const t = document.createElement('div'); t.className = 'mate'; const src = e.X.still?.url, vid = e.X.normal?.video ? e.X.normal.url : '';
+    t.innerHTML = (src ? `<img src="${src}" alt="">` : '') + (vid ? `<video src="${vid}" muted loop playsinline autoplay style="position:absolute;inset:0;opacity:0" onplaying="this.style.opacity=1"></video>` : '') + `<b></b>`;
+    t.querySelector('b').textContent = e.X.name; crew.append(t);
+  }
+  holo.append(crew);
+}
 let holoMode = INTERCOM ? 'normal' : 'normal', onCall = true, dialUntil = 0, holoKey = '';
 const CUT = 14;
 function holoShape(w, h) {   // the frame outline (chamfered corners) and the stencil plate, rebuilt when the size changes

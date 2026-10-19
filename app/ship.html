@@ -94,6 +94,14 @@ body.holofull .hud,body.holofull .row2,body.holofull .knob,body.holofull .call,b
 #radar{position:fixed;left:50%;bottom:calc(max(26px,env(safe-area-inset-bottom)) + 14px);transform:translateX(-50%);margin:0;width:min(104px,calc(100vw - 2*(max(22px,env(safe-area-inset-left)) + 140px)));height:auto;aspect-ratio:1}
 .typebar{right:14px}
 body.holofull .log,body.holofull .typebar{z-index:8}
+
+.holo .crew{position:absolute;right:0;bottom:calc(100% + 30px);display:flex;gap:6px;pointer-events:none}
+.holo .mate{position:relative;width:58px;height:70px;border:1px solid var(--c);background:#0a1c26;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);overflow:hidden;box-shadow:0 0 8px var(--c)}
+.holo .mate img,.holo .mate video{width:100%;height:100%;object-fit:cover;object-position:50% 12%;display:block}
+.holo .mate b{position:absolute;left:0;right:0;bottom:0;padding:2px 4px;font:700 9px/1.2 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#e9fdff;background:linear-gradient(transparent,#000c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.holo .mate::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(144,224,228,.12) 0 1px,transparent 1px 3px)}
+.holo.full .crew{right:max(14px,env(safe-area-inset-right));top:max(14px,env(safe-area-inset-top));bottom:auto;flex-direction:row}
+.holo.full .mate{width:78px;height:94px}.holo.mini .crew{display:none}
 </style></head><body>
 <canvas id="view"></canvas>
 <div id="stick"></div><div class="knob" id="knob"><i></i><b class="l"></b><b class="r"></b></div><div class="knob look" id="knob2"><i></i><b class="l"></b><b class="r"></b></div>
@@ -107,5 +115,5 @@ body.holofull .log,body.holofull .typebar{z-index:8}
 <div class="holo" id="holo"><div class="scr" id="holoScr"><i></i></div><svg id="holoSvg"></svg><div class="side"></div><div class="msg" id="holoMsg">No signal</div><div class="tab" id="holoTab"><s></s><span id="holoName"></span><em id="holoState"></em></div><div class="btns"><button id="hTalk" aria-label="Speak">🎙</button><button id="hType" class="fo" aria-label="Type">⌨</button><button id="hMin" aria-label="Minimise">▁</button><button id="hFull" aria-label="Full screen">⛶</button><button id="hLog" class="fo" aria-label="Call log">☰</button><button id="hCall" class="hang fo" aria-label="Hang up">✆</button></div></div>
 <div class="fade" id="fade"></div>
 <div class="start" id="start"><h1>Walk the ship</h1><p>Judy walks with you. Doors open as you reach them. Step into a lift and choose a deck.</p><button id="go" disabled>Loading the ship…</button></div>
-<script type="module" src="ship.mjs?v=26"></script>
+<script type="module" src="ship.mjs?v=27"></script>
 </body></html>
