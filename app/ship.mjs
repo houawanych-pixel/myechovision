@@ -38,7 +38,13 @@ async function loadConfig() {
   const JUDY = { name: 'Judy', still: { url: 'assets/judy.webp' }, normal: { url: 'assets/judy-normal.mp4', video: true }, walk: { url: 'assets/judy-walk-knee.mp4', video: true }, walkSound: 'assets/judy-walk-knee.mp3', talk: { url: 'assets/judy-talk.mp4', video: true }, chroma: 'green', spill: 0.8, cut: true, model: 'assets/rigs/judy.glb', rigged: true };
   let st = null; try { st = JSON.parse(localStorage.getItem('echo-vision-studio-v2')) } catch { }
   const sid = params.get('session'), sess = sid && st?.sessions?.find(x => x.id === sid);
-  if (!sess) return { world: 'ship', name: 'Walk the ship', partner: { ...JUDY, hasBody: true, model: bodyPref() === 'video' ? '' : JUDY.model } };
+  // the call log: the most recent stories (who, when), newest first
+  const calls = [];
+  for (const x of [...(st?.sessions || [])].sort((a, b) => String(b.created || '').localeCompare(String(a.created || ''))).slice(0, 6)) {
+    const c = st.cast?.find(k => k.id === x.partner); if (!c) continue;
+    calls.push({ name: c.name, img: c.id === 'judy' ? 'assets/judy.webp' : (await mediaOf(c.image))?.url || '', when: x.created || '', now: x.id === sid });
+  }
+  if (!sess) return { world: 'ship', name: 'Walk the ship', calls, partner: { ...JUDY, hasBody: true, model: bodyPref() === 'video' ? '' : JUDY.model } };
   const scene = st.scenes.find(x => x.id === sess.scene) || {}, c = st.cast.find(x => x.id === sess.partner) || {};
   const partner = c.id === 'judy' ? JUDY : {
     name: c.name || 'Your companion', chroma: c.chroma || 'none', spill: c.spill ?? 0.8, rigged: !!c.rigged, rigGentle: !!c.rigGentle, cut: !!c.chroma && c.chroma !== 'none',
@@ -50,7 +56,7 @@ async function loadConfig() {
     extras.push({ name: m.name, chroma: m.chroma || 'none', spill: m.spill ?? 0.8, still: await mediaOf(m.image), normal: await mediaOf(m.clips?.normal || m.loop), walk: await mediaOf(m.clips?.walkLoop || m.clips?.walk), full: await mediaOf(m.clips?.approach) });
   }
   partner.hasBody = !!partner.model; if (bodyPref() === 'video') partner.model = '';
-  return { world: !scene.world || scene.world === 'ship' ? 'ship' : (await mediaOf(scene.world))?.url || 'ship', name: scene.name || 'Your world', partner, extras };
+  return { world: !scene.world || scene.world === 'ship' ? 'ship' : (await mediaOf(scene.world))?.url || 'ship', name: scene.name || 'Your world', partner, extras, calls };
 }
 const CFG = await loadConfig(), P = CFG.partner, SHIP = CFG.world === 'ship';
 document.querySelector('.start h1').textContent = CFG.name;
@@ -518,7 +524,7 @@ function frame(now) {
 // Tap the picture for a big view. Someone with no 3D body and no green-screen clip is only ever here, on a call;
 // someone with a 3D body walks with you and the screen shows their face. Hang up / call, minimise, bigger, call log.
 // A partner with no 3D body and no green-screen clip is shown as a call on a screen, never as a flat picture in the room.
-const INTERCOM = !model;   // only a GLB character walks with you; everyone else is on the call screen if (INTERCOM) judyMat.uniforms.fadeBottom.value = 0;
+const INTERCOM = !model && !P.cut;   // a GLB body or a green-screen video walks with you; a plain picture is only ever on the call screen if (INTERCOM) judyMat.uniforms.fadeBottom.value = 0;
 if (P.hasBody) { const b = document.createElement('button'); b.className = 'chip'; b.textContent = P.model ? '🎞 Video' : '🧍 3D'; b.title = 'Switch between the 3D body and the video';
   b.onclick = () => { try { localStorage.setItem('ship-body', P.model ? 'video' : '3d') } catch { } location.reload() }; $('talkBtn').before(b) }
 const hudScene = new THREE.Scene(), hudCam = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 0, 2);
@@ -541,12 +547,12 @@ if (EXTRAS.length) {
 }
 let holoMode = INTERCOM ? 'normal' : 'normal', onCall = true, dialUntil = 0, holoKey = '';
 const CUT = 14;
-function holoShape(w, h) {   // the frame outline (chamfered corners) and the stencil plate, rebuilt when the size changes
-  const k = w + 'x' + h; if (k === holoKey) return; holoKey = k;
+function holoShape(w, h, svg = holoSvg) {   // the frame outline (chamfered corners) and the stencil plate, rebuilt when the size changes
+  const k = svg.id + w + 'x' + h; if (k === holoKey) return; holoKey = k;
   const pts = [[CUT, 0], [w, 0], [w, h - CUT], [w - CUT, h], [0, h], [0, CUT]];
-  holoSvg.setAttribute('width', w); holoSvg.setAttribute('height', h);
+  svg.setAttribute('width', w); svg.setAttribute('height', h);
   const tick = (x, y, dx, dy) => `M${x} ${y}l${dx} 0M${x} ${y}l0 ${dy}`;
-  holoSvg.innerHTML = `<polygon points="${pts.map(p => p.join(',')).join(' ')}" fill="none" stroke="var(--c)" stroke-width="1.5"/>`
+  svg.innerHTML = `<polygon points="${pts.map(p => p.join(',')).join(' ')}" fill="none" stroke="var(--c)" stroke-width="1.5"/>`
     + `<path d="${tick(w - 3, 3, -16, 10)}${tick(3, h - 3, 16, -10)}" stroke="var(--c)" stroke-width="3" fill="none"/>`
     + `<path d="M${CUT + 6} ${h - 5}h${Math.max(10, w * 0.3)}" stroke="var(--c)" stroke-width="2" opacity=".7"/>`;
   const sh = new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x / w - 0.5, 0.5 - y / h)));
@@ -558,13 +564,13 @@ function holoLayout() {
   // Tall phone: above the right stick. Wide phone: low down, between the radar and the right stick. Full = the whole view.
   const W = innerWidth, H = innerHeight, m0 = hudMat.uniforms.map.value?.image;
   const r0 = (m0?.videoHeight || m0?.height || 3) / (m0?.videoWidth || m0?.width || 2);
-  const btn = 46, tab = 26, top = 112, stickTop = H - 170;
+  const btn = 46, tab = 26, top = 112, stickTop = H - 140;
   if (holoMode === 'full') return { x: 0, y: 0, w: W, h: H - 74 };
   if (stickTop - btn - tab - top >= 170) {   // room above the right stick
     const w = Math.round(Math.min(170, W * 0.42)), h = Math.round(Math.min(stickTop - btn - top - tab, Math.max(w * 1.1, Math.min(w * 1.45, w * r0))));
     return { x: W - w - 16, y: stickTop - btn - h, w, h };
   }
-  const left = W / 2 + 62, right = W - 172, w = Math.round(Math.max(130, Math.min(190, right - left)));
+  const left = W / 2 + 56, right = W - 140, w = Math.round(Math.max(130, Math.min(190, right - left)));
   const h = Math.round(Math.min(H - 18 - btn - tab - top, Math.max(w * 0.9, Math.min(w * 1.3, w * r0))));
   return { x: Math.round(Math.min(right - w, (left + right - w) / 2)), y: H - 14 - btn - h, w, h };
 }
@@ -581,21 +587,49 @@ function holoState() {
 function drawComms() {
   if (!started) { holo.style.display = 'none'; return }
   holo.style.display = 'block'; holoState();
-  const L = holoLayout(); holo.style.left = L.x + 'px'; holo.style.top = L.y + 'px'; holo.style.width = L.w + 'px'; holo.style.height = (L.h + (holoMode === 'full' ? 74 : 50)) + 'px';
+  if (holoMode === 'full') cuTick();
+  const L = holoMode === 'full' ? cuRect() : holoLayout(); if (holoMode !== 'full') { holo.style.left = L.x + 'px'; holo.style.top = L.y + 'px'; holo.style.width = L.w + 'px'; holo.style.height = (L.h + 50) + 'px' }
   if (holoMode === 'mini' || !onCall || performance.now() < dialUntil) return;
-  holoShape(L.w, L.h);
+  holoShape(L.w, L.h, holoMode === 'full' ? $('cuSvg') : holoSvg);
   hudMat.uniforms.map.value = judyMat.uniforms.map.value;
   const m = hudMat.uniforms.map.value?.image, aw = m?.videoWidth || m?.width || 2, ah = m?.videoHeight || m?.height || 3, a = aw / ah, pa = L.w / L.h;
   // fill the screen (cropping the sides a little) so it reads as a call, not a small picture in a box
-  if (holoMode === 'full') { hudFace.scale.set(a > pa ? 1 : a / pa, a > pa ? pa / a : 1, 1); hudFace.position.y = 0 }   // full screen: the whole picture
-  else { hudFace.scale.set(a > pa ? a / pa : 1, a > pa ? 1 : pa / a, 1); hudFace.position.y = 0.5 - hudFace.scale.y / 2 }   // small: filled, cropped from the bottom so the face stays
+  { hudFace.scale.set(a > pa ? a / pa : 1, a > pa ? 1 : pa / a, 1); hudFace.position.y = 0.5 - hudFace.scale.y / 2 }   // small: filled, cropped from the bottom so the face stays
   const W = innerWidth, H = innerHeight, y = H - L.y - L.h, bg = renderer.getClearColor(new THREE.Color()), ba = renderer.getClearAlpha();
   renderer.setScissorTest(true); renderer.setViewport(L.x, y, L.w, L.h); renderer.setScissor(L.x, y, L.w, L.h);
   renderer.clear(false, true, true); renderer.render(hudScene, hudCam);
   renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H); renderer.setClearColor(bg, ba);
 }
-const setMode = m => { holoMode = m; if (m === 'full') { input.mx = input.my = input.lx = input.ly = 0; stickId = look2Id = lookId = null; knobDot.style.transform = knob2Dot.style.transform = '' } };
+const setMode = m => { if (m === 'full' && holoMode !== 'full') { cuFill(); cuStart = cuStart || performance.now(); cuLines = -1 } holoMode = m; if (m === 'full') { input.mx = input.my = input.lx = input.ly = 0; stickId = look2Id = lookId = null; knobDot.style.transform = knob2Dot.style.transform = '' } };
 holoScr.onclick = () => setMode(holoMode === 'full' ? 'normal' : 'full');
+// ---- the full-screen messenger
+const cuPic = $('cuPic'); let cuStart = 0, cuLines = -1;
+function cuRect() { const r = cuPic.getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top), w: Math.max(40, Math.round(r.width)), h: Math.max(40, Math.round(r.height)) } }
+const escH = t => String(t).replace(/[<&>"]/g, c => ({ '<': '&lt;', '&': '&amp;', '>': '&gt;', '"': '&quot;' }[c]));
+const when = iso => { const d = new Date(iso); if (isNaN(d)) return ''; const t = new Date(); return d.toDateString() === t.toDateString() ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString([], { month: 'short', day: 'numeric' }) };
+function cuFill() {
+  $('cuName').textContent = P.name;
+  $('cuCalls').innerHTML = (CFG.calls?.length ? CFG.calls : [{ name: P.name, img: P.still?.url || '', now: true }]).map(c => `<div class="cu-row${c.now ? ' now' : ''}">${c.img ? `<img src="${escH(c.img)}" alt="">` : `<i>${escH(c.name[0] || '?')}</i>`}<span><b>${escH(c.name)}</b><small>${c.now ? 'On the line' : escH(when(c.when))}</small></span><em>📞</em></div>`).join('');
+  const cr = $('cuCrew'); cr.replaceChildren(...[...holo.querySelectorAll('.crew .mate')].map(m => m.cloneNode(true)));
+}
+function cuTick() {
+  const dialing = performance.now() < dialUntil;
+  cuPic.classList.toggle('off', !onCall); cuPic.classList.toggle('dialing', dialing);
+  $('cuMsg').textContent = !onCall ? 'Call ended · tap ✆ to call' : 'Calling…';
+  $('cuNameBox').classList.toggle('off', !onCall); $('cuSub').textContent = !onCall ? 'Offline' : dialing ? 'Calling…' : talking ? 'Speaking' : 'Online';
+  const e = $('cuEnd'); e.className = onCall ? 'end' : 'dial'; e.lastChild.textContent = onCall ? 'End call' : 'Call';
+  $('cuTalk').classList.toggle('on', talkBtn.classList.contains('on'));
+  const sec = Math.floor((performance.now() - cuStart) / 1000); $('cuClock').textContent = String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0');
+  $('cuWhere').textContent = CFG.name;
+  if (cuLines !== logLines.length) { cuLines = logLines.length;
+    const said = logLines.filter(l => l.who !== 'note').slice(-6);
+    $('cuMsgs').innerHTML = said.length ? said.map(l => `<div class="cu-say ${l.who}"><b>${l.who === 'you' ? 'You' : escH(P.name)}</b>${escH(l.text)}</div>`).join('') : '<div class="cu-say"><small>Say something, or tap Type.</small></div>';
+    $('cuMsgs').parentElement.scrollTop = 1e6 }
+}
+$('cuTalk').onclick = () => talkBtn.click(); $('cuType').onclick = $('cnType').onclick = () => typeBtn.click();
+$('cuLog').onclick = $('cnLog').onclick = () => logBtn.click(); $('cuBack').onclick = $('cnBack').onclick = () => setMode('normal');
+$('cnCall').onclick = () => { if (!onCall) $('hCall').click() };
+$('cuEnd').onclick = () => $('hCall').click();
 $('holoTab').onclick = () => { if (holoMode === 'mini') setMode('normal') };
 $('hMin').onclick = () => setMode(holoMode === 'normal' ? 'mini' : 'normal');   // in full screen it brings the small screen and the sticks back
 $('hFull').onclick = () => setMode(holoMode === 'full' ? 'normal' : 'full');
@@ -707,6 +741,16 @@ for (const e of EXTRAS) { e.f = createFollower([...judy.p], player.deck, { gap: 
 placeDoors(); placeCamera();
 requestAnimationFrame(frame);
 const go = $('go'); go.disabled = false; go.textContent = 'Start walking';
+// someone with a 3D body and a video: pick which one walks with you (remembered; switching reloads the walk)
+if (P.hasBody && (P.walk?.video || P.normal?.video)) {
+  const row = document.createElement('div'); row.className = 'bodypick';
+  for (const [k, label] of [['3d', `3D ${P.name}`], ['video', `Video ${P.name}`]]) {
+    const b = document.createElement('button'); b.textContent = label; b.className = bodyPref() === k ? 'on' : '';
+    b.onclick = () => { if (bodyPref() === k) return; try { localStorage.setItem('ship-body', k) } catch { } location.reload() };
+    row.append(b);
+  }
+  go.before(row);
+}
 go.onclick = () => {
   startTalk();
   try { actx = new (window.AudioContext || window.webkitAudioContext)(); loadSteps(); loadHerWalk() } catch { }

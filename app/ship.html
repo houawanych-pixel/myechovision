@@ -10,17 +10,18 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 .back{color:var(--text);text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px}
 .where{margin-left:auto;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;color:var(--cyan);font-weight:600}
 #stick{position:fixed;left:0;bottom:0;width:50%;height:55%}
-.knob{position:fixed;left:calc(max(22px,env(safe-area-inset-left)) + 66px);bottom:calc(max(26px,env(safe-area-inset-bottom)) + 66px);width:132px;height:132px;margin:0 0 -66px -66px;border-radius:50%;border:3px solid rgba(255,255,255,.95);background:rgba(255,255,255,.16);pointer-events:none;box-shadow:0 0 18px rgba(144,224,228,.55),inset 0 0 0 10px rgba(255,255,255,.08)}
+.knob{position:fixed;left:calc(max(18px,env(safe-area-inset-left)) + 52px);bottom:calc(max(22px,env(safe-area-inset-bottom)) + 52px);width:104px;height:104px;margin:0 0 -52px -52px;border-radius:50%;border:3px solid rgba(255,255,255,.95);background:rgba(255,255,255,.16);pointer-events:none;box-shadow:0 0 18px rgba(144,224,228,.55),inset 0 0 0 10px rgba(255,255,255,.08)}
 .knob::before,.knob::after{content:'';position:absolute;left:50%;top:50%;border:7px solid transparent;opacity:.95}
-.knob::before{margin:-62px 0 0 -7px;border-bottom-color:#e8ecf5}
-.knob::after{margin:48px 0 0 -7px;border-top-color:#e8ecf5}
+.knob::before{margin:-49px 0 0 -7px;border-bottom-color:#e8ecf5}
+.knob::after{margin:35px 0 0 -7px;border-top-color:#e8ecf5}
 .knob b{position:absolute;top:50%;margin-top:-7px;border:7px solid transparent;opacity:.95}
 .knob b.l{left:2px;border-right-color:#e8ecf5}.knob b.r{right:2px;border-left-color:#e8ecf5}
-.knob i{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:#fff;box-shadow:0 0 16px rgba(144,224,228,.8),0 4px 14px rgba(0,0,0,.35);transition:transform .08s}
+.knob i{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:#fff;box-shadow:0 0 16px rgba(144,224,228,.8),0 4px 14px rgba(0,0,0,.35);transition:transform .08s}
 .knob.on i{transition:none}
-.knob.look{left:auto;right:calc(max(22px,env(safe-area-inset-right)) + 66px);margin:0 -66px -66px 0;border-color:rgba(144,224,228,.9);background:rgba(144,224,228,.12)}
+.knob.look{left:auto;right:calc(max(18px,env(safe-area-inset-right)) + 52px);margin:0 -52px -52px 0;border-color:rgba(144,224,228,.9);background:rgba(144,224,228,.12)}
 .hint{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:max(26px,env(safe-area-inset-bottom));max-width:min(46vw,260px);text-align:right;font-size:13px;line-height:1.35;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 12px;pointer-events:none;transition:opacity .6s}
-.call,.panel{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(max(26px,env(safe-area-inset-bottom)) + 168px);display:none}
+.call,.panel{position:fixed;left:max(14px,env(safe-area-inset-left));bottom:calc(max(22px,env(safe-area-inset-bottom)) + 124px);display:none;z-index:7}
+@media (max-height:520px){.panel #floors{display:grid;grid-template-columns:1fr 1fr;gap:0 6px}.panel{bottom:calc(max(22px,env(safe-area-inset-bottom)) + 112px)}}
 .call{border:0;border-radius:16px;padding:14px 18px;background:var(--amber);color:#1b1305;font-weight:700;font-size:16px;box-shadow:0 6px 24px rgba(0,0,0,.4)}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:12px;min-width:150px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
 .panel h3{margin:0 0 8px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
@@ -91,7 +92,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 .holo.full .side{display:none}
 .holo.full::before{content:"";position:absolute;left:0;right:0;bottom:0;height:74px;background:linear-gradient(#06101a,#03080e);border-top:1px solid var(--c);pointer-events:auto}.holo.full{transition:none}
 body.holofull .hud,body.holofull .row2,body.holofull .knob,body.holofull .call,body.holofull .panel{display:none!important}
-#radar{position:fixed;left:50%;bottom:calc(max(26px,env(safe-area-inset-bottom)) + 14px);transform:translateX(-50%);margin:0;width:min(104px,calc(100vw - 2*(max(22px,env(safe-area-inset-left)) + 140px)));height:auto;aspect-ratio:1}
+#radar{position:fixed;left:50%;bottom:calc(max(22px,env(safe-area-inset-bottom)) + 8px);transform:translateX(-50%);margin:0;width:min(96px,calc(100vw - 2*(max(18px,env(safe-area-inset-left)) + 112px)));height:auto;aspect-ratio:1}
 .typebar{right:14px}
 body.holofull .log,body.holofull .typebar{z-index:8}
 
@@ -102,6 +103,51 @@ body.holofull .log,body.holofull .typebar{z-index:8}
 .holo .mate::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(144,224,228,.12) 0 1px,transparent 1px 3px)}
 .holo.full .crew{right:max(14px,env(safe-area-inset-right));top:max(14px,env(safe-area-inset-top));bottom:auto;flex-direction:row}
 .holo.full .mate{width:78px;height:94px}.holo.mini .crew{display:none}
+
+/* full screen call: a holo messenger panel (owner's references): header, nav, the video, round call buttons, call log + messages */
+.holo.full{display:none!important}
+.callui{position:fixed;inset:0;z-index:6;display:none;grid-template-columns:168px 1fr 220px;grid-template-rows:auto 1fr 84px;gap:8px;padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));--c:#7fd8ff;font-family:system-ui,sans-serif;color:#e8f6ff}
+body.holofull .callui{display:grid}
+.callui .pn{background:linear-gradient(160deg,rgba(14,34,56,.88),rgba(6,16,30,.9));border:1px solid rgba(127,216,255,.55);box-shadow:0 0 18px rgba(80,180,255,.25),inset 0 0 22px rgba(80,180,255,.08);clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+.cu-head{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:8px 16px;font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.cu-head .brand{font-weight:800;letter-spacing:.3em;color:#bfe9ff}.cu-head .live{color:#7dffb0;font-weight:700}.cu-head .live s{display:inline-block;width:8px;height:8px;border-radius:50%;background:#7dffb0;box-shadow:0 0 8px #7dffb0;margin-right:6px;animation:pulse2 1.2s infinite}
+.cu-head .cuw{margin-left:auto;color:#9fc6dc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cu-head .clock{color:#bfe9ff;font-variant-numeric:tabular-nums}
+.cu-nav{grid-row:2/4;display:flex;flex-direction:column;gap:8px;padding:10px 8px;overflow:auto}
+.cu-nav button{display:grid;grid-template-columns:30px 1fr;align-items:center;text-align:left;gap:2px 8px;border:1px solid rgba(127,216,255,.25);background:rgba(10,28,48,.7);color:#e8f6ff;padding:9px 10px;border-radius:10px;font-size:20px}
+.cu-nav button b{font-size:13px;letter-spacing:.08em;text-transform:uppercase}.cu-nav button small{grid-column:2;font-size:10px;color:#8fb6cc;letter-spacing:.06em}
+.cu-nav button.on{border-color:var(--c);background:rgba(40,110,170,.45);box-shadow:0 0 12px rgba(127,216,255,.4)}
+.cu-pic{position:relative;grid-column:2;grid-row:2;min-height:0}
+.cu-pic svg{position:absolute;left:0;top:0;overflow:visible;pointer-events:none;filter:drop-shadow(0 0 8px var(--c))}
+.cu-pic::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(127,216,255,.07) 0 1px,transparent 1px 3px);pointer-events:none}
+.cu-name{position:absolute;left:18px;bottom:16px;text-shadow:0 2px 8px #000}.cu-name b{display:block;font-size:26px;letter-spacing:.18em;text-transform:uppercase}.cu-name small{color:#7dffb0;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.cu-name.off small{color:#ff8a8a}
+.cu-crew{position:absolute;right:12px;top:12px;display:flex;gap:6px;pointer-events:none}
+.cu-crew .mate{position:relative;width:72px;height:88px;border:1px solid var(--c);background:#0a1c26;overflow:hidden;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.cu-crew .mate img,.cu-crew .mate video{width:100%;height:100%;object-fit:cover;object-position:50% 12%;display:block}
+.cu-crew .mate b{position:absolute;left:0;right:0;bottom:0;padding:2px 4px;font:700 9px/1.2 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#e9fdff;background:linear-gradient(transparent,#000c)}
+.cu-msg{position:absolute;inset:0;display:none;place-items:center;color:#ff9a9a;font-weight:800;letter-spacing:.2em;font-size:13px;text-transform:uppercase;background:rgba(6,14,24,.92)}
+.cu-pic.off .cu-msg,.cu-pic.dialing .cu-msg{display:grid}.cu-pic.dialing .cu-msg{color:#7dffb0}
+.cu-bar{grid-column:2;grid-row:3;display:flex;justify-content:center;align-items:center;gap:14px}
+.cu-bar button{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;color:#cfeeff;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:0}
+.cu-bar button span{display:grid;place-items:center;width:50px;height:50px;border-radius:50%;font-size:21px;border:1.5px solid rgba(127,216,255,.7);background:rgba(10,30,54,.85);box-shadow:0 0 12px rgba(127,216,255,.3)}
+.cu-bar button.big span{width:62px;height:62px;font-size:26px;border-color:#9fe3ff;box-shadow:0 0 20px rgba(127,216,255,.7)}
+.cu-bar button.on span{background:#2a8fd6;color:#fff}
+.cu-bar button.end span{background:#d92d3a;border-color:#ff8a8a;color:#fff}.cu-bar button.dial span{background:#1f9e5a;border-color:#7dffb0;color:#fff}
+.cu-side{grid-row:2/4;display:flex;flex-direction:column;gap:8px;min-height:0}
+.cu-side section{flex:1;min-height:0;overflow:auto;padding:10px 10px 6px}
+.cu-side h4{margin:0 0 8px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#9fe3ff;display:flex;justify-content:space-between}
+.cu-row{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;padding:6px 4px;border-bottom:1px solid rgba(127,216,255,.12);font-size:12px}
+.cu-row img,.cu-row i{width:34px;height:34px;border-radius:50%;object-fit:cover;object-position:50% 15%;background:#123;border:1px solid rgba(127,216,255,.5);display:grid;place-items:center;font-style:normal;font-weight:700}
+.cu-row b{display:block;font-size:13px}.cu-row small{color:#8fb6cc}.cu-row em{font-style:normal;color:#7dffb0;font-size:16px}
+.cu-row.now{background:rgba(60,140,210,.25);border-radius:8px}
+.cu-say{font-size:12px;line-height:1.35;padding:6px 4px;border-bottom:1px solid rgba(127,216,255,.12)}.cu-say b{color:#9fe3ff;margin-right:4px}.cu-say.you b{color:#c9cfe6}
+@media (orientation:portrait){
+ .callui{grid-template-columns:1fr;grid-template-rows:auto minmax(0,52vh) 86px minmax(0,1fr)}
+ .cu-nav{display:none}.cu-pic,.cu-bar,.cu-side{grid-column:1}.cu-pic{grid-row:2}.cu-bar{grid-row:3;gap:10px}.cu-side{grid-row:4;flex-direction:row}
+ .cu-head{gap:8px;font-size:11px}.cu-head .brand{display:none}
+}
+@media (orientation:landscape) and (max-width:760px){.callui{grid-template-columns:0 1fr 190px}.cu-nav{display:none}}
+.bodypick{display:flex;gap:8px;margin-top:4px}.bodypick button{margin:0;background:transparent;color:var(--text);border:1px solid var(--line);font-weight:600;font-size:15px;padding:10px 18px}.bodypick button.on{background:var(--cyan);color:#06222a;border-color:var(--cyan)}
 </style></head><body>
 <canvas id="view"></canvas>
 <div id="stick"></div><div class="knob" id="knob"><i></i><b class="l"></b><b class="r"></b></div><div class="knob look" id="knob2"><i></i><b class="l"></b><b class="r"></b></div>
@@ -113,7 +159,12 @@ body.holofull .log,body.holofull .typebar{z-index:8}
 <button class="call" id="call">Call lift</button>
 <div class="panel" id="panel"><h3>Turbolift</h3><div id="floors"></div></div>
 <div class="holo" id="holo"><div class="scr" id="holoScr"><i></i></div><svg id="holoSvg"></svg><div class="side"></div><div class="msg" id="holoMsg">No signal</div><div class="tab" id="holoTab"><s></s><span id="holoName"></span><em id="holoState"></em></div><div class="btns"><button id="hTalk" aria-label="Speak">🎙</button><button id="hType" class="fo" aria-label="Type">⌨</button><button id="hMin" aria-label="Minimise">▁</button><button id="hFull" aria-label="Full screen">⛶</button><button id="hLog" class="fo" aria-label="Call log">☰</button><button id="hCall" class="hang fo" aria-label="Hang up">✆</button></div></div>
+<div class="callui" id="callui"><div class="cu-head pn"><span class="brand">◈ ECHO LINK</span><span class="live"><s></s>Live call</span><span>Secure channel</span><span class="cuw" id="cuWhere"></span><span class="clock" id="cuClock">00:00</span></div>
+<nav class="cu-nav pn"><button class="on" id="cnCall">📞<b>Call</b><small>video · voice</small></button><button id="cnLog">🕘<b>Call log</b><small>this call</small></button><button id="cnType">💬<b>Message</b><small>type to them</small></button><button id="cnBack">⤡<b>Back</b><small>walk again</small></button></nav>
+<div class="cu-pic" id="cuPic"><svg id="cuSvg"></svg><div class="cu-name" id="cuNameBox"><b id="cuName"></b><small id="cuSub">Online</small></div><div class="cu-crew" id="cuCrew"></div><div class="cu-msg" id="cuMsg">Call ended</div></div>
+<div class="cu-bar"><button id="cuType"><span>⌨</span>Type</button><button id="cuTalk" class="big"><span>🎙</span>Talk</button><button id="cuEnd" class="end"><span>✆</span>End call</button><button id="cuLog"><span>☰</span>Call log</button><button id="cuBack"><span>⤡</span>Back</button></div>
+<aside class="cu-side"><section class="pn"><h4>Call log</h4><div id="cuCalls"></div></section><section class="pn"><h4>Messages</h4><div id="cuMsgs"></div></section></aside></div>
 <div class="fade" id="fade"></div>
 <div class="start" id="start"><h1>Walk the ship</h1><p>Judy walks with you. Doors open as you reach them. Step into a lift and choose a deck.</p><button id="go" disabled>Loading the ship…</button></div>
-<script type="module" src="ship.mjs?v=27"></script>
+<script type="module" src="ship.mjs?v=28"></script>
 </body></html>
