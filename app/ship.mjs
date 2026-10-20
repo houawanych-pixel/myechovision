@@ -120,6 +120,17 @@ if (SHIP) {
     const mats = Array.isArray(o.material) ? o.material : [o.material];
     const out = mats.map(m => { if (!m) return m; const k = m.clone(); k.polygonOffset = true; k.polygonOffsetFactor = -rank * 0.5; k.polygonOffsetUnits = -rank * 4; return k });
     o.material = Array.isArray(o.material) ? out : out[0] }) }
+// Worlds whose faces point every which way are drawn two-sided, so back-to-back walls fight too. Lift every surface a few
+// millimetres off along its own normal (small parts a little more): each side of a wall then has one clear winner.
+if (WORLD_LAYOUT && !WORLD_LAYOUT.keepSides) { const parts = [];
+  gltf.scene.traverse(o => { if (o.isMesh && o.geometry?.attributes?.position && !o.isSkinnedMesh) parts.push(o) });
+  const seen = new Map();
+  parts.forEach(o => { const g = o.geometry; if (seen.has(g)) return; if (!g.attributes.normal) g.computeVertexNormals();
+    g.computeBoundingBox(); const sz = g.boundingBox.getSize(new THREE.Vector3()), s = o.getWorldScale(new THREE.Vector3());
+    const span = Math.max(sz.x * s.x, sz.y * s.y, sz.z * s.z), eps = 0.002 + 0.004 * Math.max(0, Math.min(1, 1 - span / 12));
+    const P = g.attributes.position, N = g.attributes.normal, out = new Float32Array(P.count * 3), n = new THREE.Vector3();
+    for (let i = 0; i < P.count; i++) { n.fromBufferAttribute(N, i).normalize(); out[i * 3] = P.getX(i) + n.x * eps / (s.x || 1); out[i * 3 + 1] = P.getY(i) + n.y * eps / (s.y || 1); out[i * 3 + 2] = P.getZ(i) + n.z * eps / (s.z || 1) }
+    g.setAttribute('position', new THREE.BufferAttribute(out, 3)); g.computeBoundingBox(); g.computeBoundingSphere(); seen.set(g, 1) }) }
 let doorMat = null;
 // windows look out into space: the glass shows a 360 sky in the direction you look through it, so it moves like a real view
 // (the nebula sits ahead of the ship's nose; a sprinkle of fine stars is added on top)
