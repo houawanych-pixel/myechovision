@@ -505,6 +505,7 @@ function frame(now) {
   const inLift = liftAt(plan, player.p, player.deck), near = !inLift && liftNear(plan, player.p, player.deck);
   if (inLift) { if (panelLift !== inLift || panel.style.display !== 'block') renderPanel(inLift); panel.style.display = 'block'; call.style.display = 'none' }
   else { panel.style.display = 'none'; panelLift = null; call.style.display = near && near.at !== player.deck ? 'block' : 'none' }
+  { const rb = document.getElementById('runBtn'); if (rb) rb.style.visibility = panel.style.display === 'block' || call.style.display === 'block' ? 'hidden' : '' }   // Run steps aside for the lift buttons
   // Judy: stand on the floor, face the camera, walk clip when she moves away from you
   if (!PLAN) { const g = groundAt(judy.p, (judy.floor ?? player.floor) + 1.2); judy.floor = g ?? judy.floor ?? player.floor }
   const jf = PLAN ? floorAt(plan, judy.p, judy.deck) : judy.floor;
