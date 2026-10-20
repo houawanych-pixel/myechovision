@@ -38,7 +38,7 @@ try {
 } catch (e) { const f = new THREE.Mesh(new THREE.CircleGeometry(10, 48), new THREE.MeshStandardMaterial({ color: 0x6b5446 })); f.rotation.x = -Math.PI / 2; scene.add(f) }
 
 // ---------- Kasumi: a keyed video card standing on the floor ----------
-const KEY_FS = `uniform sampler2D map;varying vec2 vUv;void main(){vec4 c=texture2D(map,vUv);float g=c.g-max(c.r,c.b);float a=1.0-smoothstep(0.06,0.22,g);vec3 o=c.rgb;if(g>0.0)o.g=max(c.r,c.b)+g*0.15;if(a<0.02)discard;gl_FragColor=vec4(o,a);}`;
+const KEY_FS = `uniform sampler2D map;varying vec2 vUv;void main(){vec4 c=texture2D(map,vUv);float g=c.g-max(c.r,c.b);float a=1.0-smoothstep(0.06,0.22,g);vec3 o=c.rgb;o.g=min(o.g,min(max(c.r,c.b),(c.r+c.b)*0.5+0.03));if(a<0.02)discard;gl_FragColor=vec4(o,a);}`;
 const KEY_VS = `varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`;
 const tl = new THREE.TextureLoader(), stanceTex = await tl.loadAsync(FOE.stance); stanceTex.colorSpace = THREE.SRGBColorSpace;
 const mat = new THREE.ShaderMaterial({ uniforms: { map: { value: stanceTex } }, vertexShader: KEY_VS, fragmentShader: KEY_FS, transparent: true, depthWrite: false });

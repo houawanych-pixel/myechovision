@@ -202,7 +202,7 @@ const KEY_VS = 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix
 const KEY_FS = `uniform sampler2D map;uniform float spill;uniform float light;uniform float key;uniform float fadeBottom;varying vec2 vUv;
 void main(){vec4 c=texture2D(map,vUv);vec3 o=c.rgb;float a=1.0;
 if(key>1.5){float k=c.b-max(c.r,c.g);a=1.0-smoothstep(0.06,0.2,k);o.b=min(o.b,mix(o.b,max(o.r,o.g),spill));}
-else if(key>0.5){float k=c.g-max(c.r,c.b);a=1.0-smoothstep(0.06,0.2,k);o.g=min(o.g,mix(o.g,max(o.r,o.b),spill));}
+else if(key>0.5){float k=c.g-max(c.r,c.b);a=1.0-smoothstep(0.04,0.16,k);o.g=min(o.g,mix(o.g,min(max(o.r,o.b),(o.r+o.b)*0.5+0.03),max(spill,0.95)));}
 a*=c.a*smoothstep(0.0,fadeBottom,vUv.y);if(a<0.02)discard;
 o=mix(vec3(dot(o,vec3(0.299,0.587,0.114))),o,1.12);o=(o-0.5)*1.06+0.5;   // a touch more colour and contrast: keyed clips look washed out otherwise
 gl_FragColor=vec4(clamp(o,0.0,1.0)*light,a);
@@ -522,7 +522,7 @@ function frame(now) {
     judyMesh.position.copy(V(jx, jy, jf + top - JH * judyScale / 2));
     judyMesh.rotation.set(0, Math.atan2(camera.position.x - judyMesh.position.x, camera.position.z - judyMesh.position.z), 0);
     const away = judy.moving && ((judy.p[0] - player.p[0]) * judy.vel[0] + (judy.p[1] - player.p[1]) * judy.vel[1]) > 0.3;
-    showClip(talking && clips.talk ? 'talk' : (P.walkSound ? judy.moving : away) ? 'walk' : 'normal');
+    showClip(talking && clips.talk ? 'talk' : judy.moving && (P.walkSound || away || Math.hypot(...judy.vel) > 0.25) ? 'walk' : 'normal');
   }
   placeCamera();
   if (now - labelTimer > 300 && !riding) {
