@@ -443,6 +443,11 @@ function placeCamera() {
   camera.rotation.y = player.yaw; camera.rotation.x = player.pitch;
   lamp.position.copy(V(p[0], p[1], player.floor + 2.6));
 }
+// Run: tap the button (or hold Shift) to sprint; tap again to walk.
+let sprint = false;
+{ const b = document.createElement('button'); b.id = 'runBtn'; b.textContent = '🏃 Run'; b.setAttribute('aria-pressed', 'false');
+  b.onpointerdown = e => { e.stopPropagation(); e.preventDefault(); sprint = !sprint; b.classList.toggle('on', sprint); b.setAttribute('aria-pressed', String(sprint)) };
+  document.body.append(b) }
 let last = performance.now(), hintTimer = 0, labelTimer = 0;
 function frame(now) {
   requestAnimationFrame(frame);
@@ -451,15 +456,14 @@ function frame(now) {
     let mx = input.mx, my = input.my; const k = input.keys;
     if (k.has('w') || k.has('arrowup')) my = 1; if (k.has('s') || k.has('arrowdown')) my = -1;
     if (k.has('a') || k.has('arrowleft')) mx = -1; if (k.has('d') || k.has('arrowright')) mx = 1;
-    // a small dead zone, then turn speed grows with how far the stick is pushed sideways
-    const turn = Math.abs(mx) < 0.12 ? 0 : Math.sign(mx) * (Math.abs(mx) - 0.12) / 0.88;
-    player.yaw -= turn * Math.abs(turn) * 1.6 * dt; mx = 0;
+    // left stick: forward/back and sidestep (strafe); turning is the right stick. Small dead zone.
+    if (Math.abs(mx) < 0.15) mx = 0;
     // the look stick: turn and tilt, faster the further it is pushed
     const lx = Math.abs(input.lx) < 0.1 ? 0 : input.lx, ly = Math.abs(input.ly) < 0.1 ? 0 : input.ly;
     player.yaw -= lx * Math.abs(lx) * 2.4 * dt; player.pitch = Math.max(PITCH_DOWN, Math.min(PITCH_UP, player.pitch + ly * Math.abs(ly) * 1.4 * dt));
     if (Math.abs(my) < 0.12) my = 0;
     const fx = -Math.sin(player.yaw), fy = Math.cos(player.yaw), rx = Math.cos(player.yaw), ry = Math.sin(player.yaw);
-    const sp = my < 0 ? 1.4 : 2.2, vx = (fx * my + rx * mx) * sp, vy = (fy * my + ry * mx) * sp;
+    const run = sprint || k.has('shift'), sp = (my < -0.15 ? 1.8 : 2.8) * (run ? 1.9 : 1), vx = (fx * my + rx * mx) * sp, vy = (fy * my + ry * mx) * sp;
     let np;
     if (PLAN) np = slide(plan, player.p, vx * dt, vy * dt, player.deck);
     else {
