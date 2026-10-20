@@ -108,6 +108,18 @@ if (SHIP) {
   if (WORLD_LAYOUT) { plan = buildPlan(WORLD_LAYOUT, WORLD_LAYOUT.decks); PLAN = true }
   else plan = { open: true, rooms: [], doors: [], lifts: [], decks: [0] };
 }
+// Stop flicker (z-fighting): many worlds have panels, trims and floor plates lying exactly on top of walls and floors.
+// Smaller parts are drawn a hair in front of the bigger surfaces they sit on, so the same one always wins.
+{ const parts = [];
+  gltf.scene.traverse(o => { if (!o.isMesh || !o.geometry?.attributes?.position) return;
+    const g = o.geometry, P = g.attributes.position, I = g.index, n = I ? I.count : P.count, a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(); let area = 0;
+    for (let t = 0; t < n; t += 3) { a.fromBufferAttribute(P, I ? I.getX(t) : t); b.fromBufferAttribute(P, I ? I.getX(t + 1) : t + 1); c.fromBufferAttribute(P, I ? I.getX(t + 2) : t + 2); area += b.sub(a).cross(c.sub(a)).length() / 2 }
+    parts.push([o, area]) });
+  parts.sort((x, y) => y[1] - x[1]);
+  parts.forEach(([o], i) => { const rank = Math.round(i / Math.max(1, parts.length - 1) * 12); if (!rank) return;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    const out = mats.map(m => { if (!m) return m; const k = m.clone(); k.polygonOffset = true; k.polygonOffsetFactor = -rank * 0.5; k.polygonOffsetUnits = -rank * 4; return k });
+    o.material = Array.isArray(o.material) ? out : out[0] }) }
 let doorMat = null;
 // windows look out into space: the glass shows a 360 sky in the direction you look through it, so it moves like a real view
 // (the nebula sits ahead of the ship's nose; a sprinkle of fine stars is added on top)
