@@ -8,7 +8,7 @@ import { GLTFLoader } from './vendor/three/loaders/GLTFLoader.js';
 import { setupRig } from './rig.mjs?v=2';
 import { MeshoptDecoder } from './vendor/three/libs/meshopt_decoder.module.js';
 import { createTalk } from './ship-talk.mjs?v=5';
-import { buildPlan, slide, walkable, floorAt, roomAt, updateDoors, liftAt, liftNear, liftDoor, createFollower, recordTrail, stepFollower, placeFollower, EYE } from './ship-core.mjs?v=5';
+import { buildPlan, slide, walkable, floorAt, roomAt, updateDoors, liftAt, liftNear, liftDoor, createFollower, recordTrail, stepFollower, placeFollower, EYE } from './ship-core.mjs?v=6';
 
 const $ = id => document.getElementById(id);
 const V = (x, y, z) => new THREE.Vector3(x, z, -y);

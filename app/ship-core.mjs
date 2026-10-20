@@ -80,7 +80,13 @@ export function buildPlan(layout, decks = [31, 36, 42]) {
     const lift = ra?.lift || rb?.lift || null;
     doors.push({ x: d.x, y: d.y, deck, w: d.w, leaf: d.leaf, u: [ux, uy], n: [nx, ny], works: !!(ra && rb), cabin: !d.leaf || ra?.name === 'cabin' || rb?.name === 'cabin', lift, open: 0 });
   }
-  return { rooms, doors, lifts, decks };
+  // solid furniture and props: footprints you walk around (a world's layout may list them as "blocks")
+  const blocks = [];
+  for (const b of layout.blocks || []) {
+    const deck = decks.find(z => Math.abs(b.z - z) < 0.6);
+    if (deck !== undefined) blocks.push({ deck, poly: b.p });
+  }
+  return { rooms, doors, lifts, decks, blocks };
 }
 
 export const deckName = (plan, deck, lift) => lift?.stops.find(s => s.deck === deck)?.name || DECK_NAMES[deck] || 'Deck';
@@ -104,6 +110,7 @@ function inDoorway(p, d, r = RADIUS) {
 // A lift room counts only while its car is on this deck.
 export function walkable(plan, p, deck, r = RADIUS) {
   if (plan.open) return true;   // someone's own 3D world: the page checks walls against the model itself
+  for (const b of plan.blocks || []) if (b.deck === deck && (inside(p, b.poly) || edgeDist(p, b.poly) < r)) return false;
   for (const d of plan.doors) if (d.deck === deck && d.works && d.open > 0.75 && inDoorway(p, d, r)) return true;
   for (const room of plan.rooms) {
     if (room.deck !== deck || !inside(p, room.poly)) continue;
