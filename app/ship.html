@@ -148,7 +148,7 @@ body.holofull .callui{display:grid}
 }
 @media (orientation:landscape) and (max-width:760px){.callui{grid-template-columns:0 1fr 190px}.cu-nav{display:none}}
 .bodypick{display:flex;gap:8px;margin-top:4px}.bodypick button{margin:0;background:transparent;color:var(--text);border:1px solid var(--line);font-weight:600;font-size:15px;padding:10px 18px}.bodypick button.on{background:var(--cyan);color:#06222a;border-color:var(--cyan)}
-#runBtn{position:fixed;z-index:7;left:calc(max(18px,env(safe-area-inset-left)) + 19px);bottom:calc(max(22px,env(safe-area-inset-bottom)) + 136px);min-width:66px;height:42px;border-radius:21px;border:2px solid rgba(255,255,255,.8);background:rgba(16,20,34,.7);color:#fff;font:700 14px system-ui;touch-action:none}#runBtn.on{background:#ffc56b;color:#1a1408;border-color:#ffc56b;box-shadow:0 0 16px #ffc56b88}
+#runBtn{position:fixed;z-index:7;left:50%;transform:translateX(-50%);bottom:calc(max(22px,env(safe-area-inset-bottom)) + 116px);min-width:66px;height:42px;border-radius:21px;border:2px solid rgba(255,255,255,.8);background:rgba(16,20,34,.7);color:#fff;font:700 14px system-ui;touch-action:none}#runBtn.on{background:#ffc56b;color:#1a1408;border-color:#ffc56b;box-shadow:0 0 16px #ffc56b88}
 </style></head><body>
 <canvas id="view"></canvas>
 <div id="stick"></div><div class="knob" id="knob"><i></i><b class="l"></b><b class="r"></b></div><div class="knob look" id="knob2"><i></i><b class="l"></b><b class="r"></b></div>
