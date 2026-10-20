@@ -48,7 +48,7 @@ async function loadConfig() {
   const scene = st.scenes.find(x => x.id === sess.scene) || {}, c = st.cast.find(x => x.id === sess.partner) || {};
   const partner = c.id === 'judy' ? JUDY : {
     name: c.name || 'Your companion', chroma: c.chroma || 'none', spill: c.spill ?? 0.8, rigged: !!c.rigged, rigGentle: !!c.rigGentle, cut: !!c.chroma && c.chroma !== 'none',
-    model: (await mediaOf(c.model))?.url || '', still: await mediaOf(c.image), normal: await mediaOf(c.clips?.normal || c.loop), walk: await mediaOf(c.clips?.walkLoop || c.clips?.walk), walkSound: (await mediaOf(c.walkSound))?.url || '', talk: await mediaOf(c.clips?.talking)
+    model: (await mediaOf(c.model))?.url || '', still: await mediaOf(c.image), normal: await mediaOf(c.clips?.normal || c.loop), walk: await mediaOf(c.clips?.walkLoop || c.clips?.walk), walkSound: (await mediaOf(c.walkSound))?.url || '', talk: await mediaOf(c.clips?.talking), run: await mediaOf(c.clips?.run)
   };
   const extras = [];
   for (const id of (sess.party || []).filter(x => x !== sess.partner && x !== sess.player).slice(0, 2)) {
@@ -244,6 +244,9 @@ if (P.normal?.video) clips.normal = videoClip(P.normal.url);
 if (P.walk?.video) clips.walk = videoClip(P.walk.url);
 if (P.talk?.video) clips.talk = videoClip(P.talk.url);
 for (const c of Object.values(clips)) c.v.addEventListener('loadedmetadata', () => fitBillboard(c.v.videoWidth, c.v.videoHeight), { once: true });
+// a run clip is full body, head to feet: while you run she is shown life size on the floor so you see her feet
+let runAspect = 0.5625; if (P.run?.video) { clips.run = videoClip(P.run.url); clips.run.v.addEventListener('loadedmetadata', () => { if (clips.run.v.videoWidth) runAspect = clips.run.v.videoWidth / clips.run.v.videoHeight }, { once: true }) }
+let running = false;
 const judyMat = new THREE.ShaderMaterial({ uniforms: { map: { value: still }, spill: { value: P.spill ?? 0.8 }, light: { value: 1.0 }, key: { value: P.chroma === 'blue' ? 2 : P.chroma === 'green' ? 1 : 0 }, fadeBottom: { value: 0.3 } }, vertexShader: KEY_VS, fragmentShader: KEY_FS, transparent: true, depthWrite: false });
 // She is shown big, the way she fills the screen in chat: close to you, her head a little above your eye line,
 // and the bottom of her clip (where it stops at the thighs) below the edge of the screen and faded out.
@@ -486,7 +489,7 @@ function frame(now) {
     player.yaw -= lx * Math.abs(lx) * 2.4 * dt; player.pitch = Math.max(PITCH_DOWN, Math.min(PITCH_UP, player.pitch + ly * Math.abs(ly) * 1.4 * dt));
     if (Math.abs(my) < 0.12) my = 0;
     const fx = -Math.sin(player.yaw), fy = Math.cos(player.yaw), rx = Math.cos(player.yaw), ry = Math.sin(player.yaw);
-    const run = sprint || k.has('shift'), sp = (my < -0.15 ? 1.8 : 2.8) * (run ? 1.9 : 1), vx = (fx * my + rx * mx) * sp, vy = (fy * my + ry * mx) * sp;
+    const run = sprint || k.has('shift'); running = run && (Math.abs(mx) > 0.15 || Math.abs(my) > 0.15); const sp = (my < -0.15 ? 1.8 : 2.8) * (run ? 1.9 : 1), vx = (fx * my + rx * mx) * sp, vy = (fy * my + ry * mx) * sp;
     let np;
     if (PLAN) np = slide(plan, player.p, vx * dt, vy * dt, player.deck);
     else {
@@ -541,12 +544,16 @@ function frame(now) {
     // size: close by she fills the view the way her picture does; as she drops back she eases down toward life size
     const far = Math.max(0, Math.min(1, (d - 1.4) / 2.6)), ease = far * far * (3 - 2 * far);
     judyScale += ((1.12 - 0.24 * ease) - judyScale) * Math.min(1, dt * 3);
-    judyMesh.scale.set(judyAspect * judyScale, judyScale, 1);
-    const top = TOP + 0.04 - 0.18 * ease;   // head a little above your eyes close up, about head height further off
-    judyMesh.position.copy(V(jx, jy, jf + top - JH * judyScale / 2));
-    judyMesh.rotation.set(0, Math.atan2(camera.position.x - judyMesh.position.x, camera.position.z - judyMesh.position.z), 0);
     const away = judy.moving && ((judy.p[0] - player.p[0]) * judy.vel[0] + (judy.p[1] - player.p[1]) * judy.vel[1]) > 0.3;
-    showClip(talking && clips.talk ? 'talk' : judy.moving && (P.walkSound || away || Math.hypot(...judy.vel) > 0.25) ? 'walk' : 'normal');
+    const clipNow = talking && clips.talk ? 'talk' : judy.moving && running && clips.run ? 'run' : judy.moving && (P.walkSound || away || Math.hypot(...judy.vel) > 0.25) ? 'walk' : 'normal';
+    if (clipNow === 'run') {   // full body, life size, feet on the floor
+      const RH = 1.95, k = RH / JH; judyMesh.scale.set(runAspect / (400 / 736) * k, k, 1); judyMesh.position.copy(V(jx, jy, jf + RH / 2)); judyMat.uniforms.fadeBottom.value = 0;
+    } else {
+    judyMesh.scale.set(judyAspect * judyScale, judyScale, 1); judyMat.uniforms.fadeBottom.value = 0.3;
+    const top = TOP + 0.04 - 0.18 * ease;   // head a little above your eyes close up, about head height further off
+    judyMesh.position.copy(V(jx, jy, jf + top - JH * judyScale / 2)) }
+    judyMesh.rotation.set(0, Math.atan2(camera.position.x - judyMesh.position.x, camera.position.z - judyMesh.position.z), 0);
+    showClip(clipNow);
   }
   placeCamera();
   if (now - labelTimer > 300 && !riding) {
