@@ -56,16 +56,29 @@ export async function createTalk({ sessionId, partnerName, sceneName, sceneDetai
     }
   }
 
-  // ---- hands-free: listen, answer, listen again
+  // ---- hands-free: listen, answer, listen again. One listener at a time (a second one made the phone beep on and off);
+  // none while she answers; after quiet spells it waits a little longer before listening again, so the start beep is rare.
   const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let rec = null, hands = false;
+  let rec = null, hands = false, quiet = 0, timer = 0;
+  const later = ms => { clearTimeout(timer); timer = setTimeout(listen, ms ?? Math.min(4000, 400 + quiet * 600)) };
   function listen() {
-    if (!hands || !Rec) return;
-    rec = new Rec(); rec.lang = navigator.language || 'en-US'; rec.interimResults = false; rec.continuous = false;
-    rec.onresult = async e => { const t = e.results[0]?.[0]?.transcript; rec = null; if (t) { await ask(t); } listen() };
-    rec.onerror = e => { rec = null; if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { hands = false; onLine('note', 'The microphone is blocked for this site. Allow it in the browser, or type instead.'); onHands(false) } else setTimeout(listen, 400) };
-    rec.onend = () => { if (rec) { rec = null; setTimeout(listen, 250) } };
-    try { rec.start() } catch { setTimeout(listen, 600) }
+    if (!hands || !Rec || rec || busy || window.speechSynthesis?.speaking) { if (hands && !rec) later(800); return }
+    const r = rec = new Rec(); r.lang = navigator.language || 'en-US'; r.interimResults = false; r.continuous = true;
+    let got = false;
+    r.onresult = e => {
+      if (r !== rec) return;
+      const res = e.results[e.results.length - 1]; if (!res?.isFinal) return;
+      const t = (res[0]?.transcript || '').trim(); if (!t) return;
+      got = true; quiet = 0; rec = null; try { r.stop() } catch { }
+      ask(t).finally(() => later(300));
+    };
+    r.onerror = e => {
+      if (r !== rec) return; rec = null;
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { hands = false; onLine('note', 'The microphone is blocked for this site. Allow it in the browser, or type instead.'); onHands(false); return }
+      quiet++; later();
+    };
+    r.onend = () => { if (r !== rec) return; rec = null; if (!got) quiet++; later() };
+    try { r.start() } catch { rec = null; later(1000) }
   }
   let onHands = () => { };
   return {
@@ -73,7 +86,7 @@ export async function createTalk({ sessionId, partnerName, sceneName, sceneDetai
     canListen: !!Rec,
     get ready() { return !!cfg },
     get name() { return partner.name },
-    setHands(on, cb) { onHands = cb || onHands; hands = !!on && !!Rec; if (hands) listen(); else { try { rec?.abort() } catch { } rec = null } return hands },
-    stop() { hands = false; try { rec?.abort() } catch { } window.speechSynthesis?.cancel() },
+    setHands(on, cb) { onHands = cb || onHands; hands = !!on && !!Rec; clearTimeout(timer); if (hands) { quiet = 0; listen() } else { const r = rec; rec = null; try { r?.abort() } catch { } } return hands },
+    stop() { hands = false; clearTimeout(timer); const r = rec; rec = null; try { r?.abort() } catch { } window.speechSynthesis?.cancel() },
   };
 }

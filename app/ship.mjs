@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from './vendor/three/loaders/GLTFLoader.js';
 import { setupRig } from './rig.mjs?v=2';
 import { MeshoptDecoder } from './vendor/three/libs/meshopt_decoder.module.js';
-import { createTalk } from './ship-talk.mjs?v=5';
+import { createTalk } from './ship-talk.mjs?v=6';
 import { buildPlan, slide, walkable, floorAt, roomAt, updateDoors, liftAt, liftNear, liftDoor, createFollower, recordTrail, stepFollower, placeFollower, EYE } from './ship-core.mjs?v=6';
 
 const $ = id => document.getElementById(id);
@@ -126,7 +126,7 @@ gltf.scene.traverse(o => {
   // the cabins' painted door is replaced by real sliding doors; keep its picture for every door leaf
   if (m && /doorimg/i.test(m.name || '')) { doorMat = m; o.visible = false }
   // a world with its own floor plan is walked from inside its rooms: show both sides of every face (some walls face outward)
-  if (m && WORLD_LAYOUT) m.side = THREE.DoubleSide;
+  if (m && WORLD_LAYOUT && !WORLD_LAYOUT.keepSides) m.side = THREE.DoubleSide;   // a layout with keepSides has its faces the right way round
   if (m && m.transparent && m.opacity < 0.05) o.visible = false;
   if (m && /star/i.test(m.name || '')) o.material = windowMat;
   // monitors stay dark glass for now (a screen animation can play on them later)
@@ -227,7 +227,8 @@ const judyMat = new THREE.ShaderMaterial({ uniforms: { map: { value: still }, sp
 const JH = 1.75, JW = JH * 400 / 736, TOP = EYE + 0.32;
 const judyMesh = new THREE.Mesh(new THREE.PlaneGeometry(JW, JH), judyMat);
 judyMesh.renderOrder = 10; scene.add(judyMesh);
-function fitBillboard(w, h) { if (w && h) judyMesh.scale.x = (w / h) / (400 / 736) }
+let judyAspect = 1, judyScale = 1.1, judyDown = 0;
+function fitBillboard(w, h) { if (w && h) { judyAspect = (w / h) / (400 / 736); judyMesh.scale.x = judyAspect * judyScale } }
 // ---------- the rest of the party ----------
 // Up to two more people follow you too. Nobody walks in single file or hides behind someone else: the first two
 // walk side by side (one a little left, one a little right of your path) and a third trails further back in the
@@ -503,7 +504,18 @@ function frame(now) {
     judyMesh.visible = false; showClip(talking && clips.talk ? 'talk' : 'normal');
   } else {
     judyMesh.visible = judy.deck === player.deck;
-    const jo = laneOffset(judy, JUDY_LANE, judyOff, dt); judyMesh.position.copy(V(judy.p[0] + jo[0], judy.p[1] + jo[1], jf + TOP - JH / 2));
+    const jo = laneOffset(judy, JUDY_LANE, judyOff, dt);
+    let jx = judy.p[0] + jo[0], jy = judy.p[1] + jo[1];
+    const dx = jx - player.p[0], dy = jy - player.p[1], d = Math.hypot(dx, dy);
+    // looking down brings her a little closer, so the bottom of her clip (it stops at the thighs) stays under the screen edge
+    judyDown += (Math.max(0, Math.min(1, -player.pitch / 0.2)) - judyDown) * Math.min(1, dt * 4);
+    if (d > 0.95) { const dd = Math.max(0.95, d * (1 - 0.25 * judyDown)); jx = player.p[0] + dx * dd / d; jy = player.p[1] + dy * dd / d }
+    // size: close by she fills the view the way her picture does; as she drops back she eases down toward life size
+    const far = Math.max(0, Math.min(1, (d - 1.4) / 2.6)), ease = far * far * (3 - 2 * far);
+    judyScale += ((1.12 - 0.24 * ease) - judyScale) * Math.min(1, dt * 3);
+    judyMesh.scale.set(judyAspect * judyScale, judyScale, 1);
+    const top = TOP + 0.04 - 0.18 * ease;   // head a little above your eyes close up, about head height further off
+    judyMesh.position.copy(V(jx, jy, jf + top - JH * judyScale / 2));
     judyMesh.rotation.set(0, Math.atan2(camera.position.x - judyMesh.position.x, camera.position.z - judyMesh.position.z), 0);
     const away = judy.moving && ((judy.p[0] - player.p[0]) * judy.vel[0] + (judy.p[1] - player.p[1]) * judy.vel[1]) > 0.3;
     showClip(talking && clips.talk ? 'talk' : (P.walkSound ? judy.moving : away) ? 'walk' : 'normal');
