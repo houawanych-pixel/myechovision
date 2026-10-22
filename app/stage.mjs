@@ -54,10 +54,10 @@ export function createStage(host){
   // it (radians, any amount: it keeps wrapping), `pano.pitch` (-1 up .. 1 down) looks up or down a little. The clip is
   // scaled up by `zoom` so there is a bit of room above and below to look into. The character is not part of it.
   let pano=null,panoRaf=0;
-  const panoBg=src=>{const v=element({src,type:'video/mp4'});v.loop=true;v.muted=true;const c=document.createElement('canvas');c.className='stagePano';bgBox.append(c);const g=c.getContext('2d');pano={yaw:0,pitch:0,zoom:1.14,video:v};v.play().catch(()=>{});
+  const panoBg=src=>{const v=element({src,type:'video/mp4'});v.loop=true;v.muted=true;const c=document.createElement('canvas');c.className='stagePano';bgBox.append(c);const g=c.getContext('2d');pano={yaw:0,pitch:0,zoom:2,video:v};v.play().catch(()=>{});
     const tick=()=>{if(dead||!pano)return;panoRaf=requestAnimationFrame(tick);const dpr=Math.min(2,devicePixelRatio||1),w=Math.round(c.clientWidth*dpr),h=Math.round(c.clientHeight*dpr);if(!w||!h||!ready(v))return;if(c.width!==w||c.height!==h){c.width=w;c.height=h}const [vw,vh]=size(v),dh=h*pano.zoom,dw=vw*dh/vh,p=Math.max(-1,Math.min(1,pano.pitch)),y=-(dh-h)/2*(1+p),turn=((pano.yaw/(2*Math.PI))%1+1)%1;let x=w/2-turn*dw-dw/2;x=((x%dw)+dw)%dw-dw;g.imageSmoothingQuality='high';for(let xx=x;xx<w;xx+=dw)g.drawImage(v,xx,y,dw,dh);
       // She stands at one spot in the place (straight ahead at yaw 0): she turns away with the room and is there again when you turn back, and moves up/down with it.
-      const k=dw/dpr/(2*Math.PI),rel=(((pano.yaw+Math.PI)%(2*Math.PI))+2*Math.PI)%(2*Math.PI)-Math.PI,fy=(y+(dh-h)/2)/dpr;fgBox.style.transform=`translate(${(-rel*k).toFixed(1)}px,calc(2% + ${fy.toFixed(1)}px)) scale(1.06)`};tick()};
+      const k=dw/dpr/(2*Math.PI),rel=(((pano.yaw+Math.PI)%(2*Math.PI))+2*Math.PI)%(2*Math.PI)-Math.PI,fy=Math.max(0,(y+(dh-h)/2)/dpr);fgBox.style.transform=`translate(${(-rel*k).toFixed(1)}px,calc(2% + ${fy.toFixed(1)}px)) scale(1.06)`};tick()};
   // A clip with its own sound (a recorded line) pushes the idle sound back while it plays.
   let ducked=false;const level=()=>talking||ducked?ambVol*0.25:ambVol,duck=on=>{ducked=on;if(gain&&actx)gain.gain.setTargetAtTime(level(),actx.currentTime,0.15)};
   const best=()=>override&&clips[override]?override:talking&&clips.talking?'talking':clips.normal?'normal':Object.keys(clips)[0]||null;

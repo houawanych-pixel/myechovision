@@ -1,0 +1,9 @@
+<!doctype html><meta name=viewport content="width=device-width"><link rel=stylesheet href="style.css?v=58">
+<body class="call"><div class="hero staged keyed pano" id="stage"></div>
+<script type=module>
+import {createStage} from './stage.mjs?v=19';
+const s=createStage(document.getElementById('stage'));
+s.setBackground({kind:'pano',src:'_t.webm'});
+s.setCharacter({normal:{src:'_j.webm',type:'video/webm'}},'green',0.8);
+window.S=s;
+</script>
