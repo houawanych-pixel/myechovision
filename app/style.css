@@ -170,3 +170,5 @@ body.call .narration{display:none}
 .bubble.narr{font-style:italic;border-color:#9e83ff55;background:#05070fcc}
 /* video-call view: no status words over her; the mic's glow shows it is listening */
 body.call #hfStatus{display:none}
+/* 360 places, motion mode: the phone does the looking, so no stick */
+body.motion .panoStick{display:none}
