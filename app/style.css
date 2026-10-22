@@ -162,3 +162,6 @@ body.call .hero.staged.pano .stageFg{transform:translate(0,2%) scale(1.06)}
 .panoStick i{position:absolute;left:50%;top:50%;width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:50%;background:rgba(170,210,255,.55);box-shadow:0 0 10px rgba(120,180,255,.6)}
 .panoStick.on{border-color:rgba(190,225,255,.8)}
 @media(orientation:landscape){.panoStick{bottom:calc(90px + env(safe-area-inset-bottom));width:84px;height:84px}}
+.panoVol{position:absolute;right:20px;bottom:calc(262px + env(safe-area-inset-bottom));z-index:6;display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:20px;background:rgba(10,16,30,.4);border:1px solid rgba(160,200,255,.35);color:#cfe3ff;font-size:14px;touch-action:none}
+.panoVol input{width:96px;accent-color:#8fc1ff}
+@media(orientation:landscape){.panoVol{bottom:calc(186px + env(safe-area-inset-bottom))}}
