@@ -165,3 +165,6 @@ body.call .hero.staged.pano .stageFg{transform:translate(0,2%) scale(1.06)}
 .panoVol{position:absolute;right:20px;bottom:calc(262px + env(safe-area-inset-bottom));z-index:6;display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:20px;background:rgba(10,16,30,.4);border:1px solid rgba(160,200,255,.35);color:#cfe3ff;font-size:14px;touch-action:none}
 .panoVol input{width:96px;accent-color:#8fc1ff}
 @media(orientation:landscape){.panoVol{bottom:calc(186px + env(safe-area-inset-bottom))}}
+/* video-call view: narration is read aloud, not put in the way; it is kept in the chat log (💬) */
+body.call .narration{display:none}
+.bubble.narr{font-style:italic;border-color:#9e83ff55;background:#05070fcc}
