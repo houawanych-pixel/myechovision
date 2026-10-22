@@ -168,3 +168,5 @@ body.call .hero.staged.pano .stageFg{transform:translate(0,2%) scale(1.06)}
 /* video-call view: narration is read aloud, not put in the way; it is kept in the chat log (💬) */
 body.call .narration{display:none}
 .bubble.narr{font-style:italic;border-color:#9e83ff55;background:#05070fcc}
+/* video-call view: no status words over her; the mic's glow shows it is listening */
+body.call #hfStatus{display:none}
