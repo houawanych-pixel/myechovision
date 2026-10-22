@@ -158,3 +158,7 @@ body.call:not(.showChips) .chips{display:none}#callHome{font-size:20px;line-heig
 .stagePano{position:absolute;inset:0;width:100%;height:100%;display:block}
 body.call .hero.staged.pano .stageBg{transform:none}
 body.call .hero.staged.pano .stageFg{transform:translate(0,2%) scale(1.06)}
+.panoStick{position:absolute;right:18px;bottom:calc(150px + env(safe-area-inset-bottom));width:96px;height:96px;border-radius:50%;background:rgba(10,16,30,.35);border:1.5px solid rgba(160,200,255,.45);box-shadow:0 0 14px rgba(80,150,255,.25) inset;z-index:6;touch-action:none;backdrop-filter:blur(2px)}
+.panoStick i{position:absolute;left:50%;top:50%;width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:50%;background:rgba(170,210,255,.55);box-shadow:0 0 10px rgba(120,180,255,.6)}
+.panoStick.on{border-color:rgba(190,225,255,.8)}
+@media(orientation:landscape){.panoStick{bottom:calc(90px + env(safe-area-inset-bottom));width:84px;height:84px}}
