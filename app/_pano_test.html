@@ -1,9 +1,0 @@
-<!doctype html><meta name=viewport content="width=device-width"><link rel=stylesheet href="style.css?v=60">
-<body class="call"><div class="hero staged keyed pano" id="stage"></div>
-<script type=module>
-import {createStage} from './stage.mjs?v=20';
-const s=createStage(document.getElementById('stage'));
-s.setBackground({kind:'pano',src:'_t.webm',rows:2,sounds:['assets/pano/unity-main-hub-a1.mp3','assets/pano/unity-main-hub-a2.mp3','assets/pano/unity-main-hub-a3.mp3']});
-s.setCharacter({normal:{src:'_j.webm',type:'video/webm'}},'green',0.8);
-window.S=s;
-</script>
